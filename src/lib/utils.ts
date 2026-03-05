@@ -93,10 +93,7 @@ export async function listFilesRecursive(rootDir: string, extension: string) {
   const stack = [rootDir];
 
   while (stack.length > 0) {
-    const currentDir = stack.pop();
-    if (!currentDir) {
-      continue;
-    }
+    const currentDir = stack.pop()!;
 
     let entries;
     try {
@@ -144,12 +141,12 @@ export function getTopModel(modelTotals: Map<string, ModelTokenTotals>): ModelUs
     }
   }
 
-  if (!bestModel || !bestTotals || bestTotals.total <= 0) {
+  if (!bestTotals || bestTotals.total <= 0) {
     return undefined;
   }
 
   return {
-    name: bestModel,
+    name: bestModel!,
     tokens: {
       input: bestTotals.input,
       output: bestTotals.output,

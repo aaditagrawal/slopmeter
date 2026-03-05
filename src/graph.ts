@@ -180,8 +180,9 @@ function getMonthLabel(week: (string | null)[]) {
 }
 
 function defaultColourMap(value: number, max: number, colorCount: number) {
-  if (colorCount <= 0) return 0;
-  if (max <= 0 || value <= 0) return 0;
+  if (max <= 0 || value <= 0) {
+    return 0;
+  }
 
   const index = Math.ceil((value / max) * (colorCount - 1));
   return Math.min(Math.max(index, 0), colorCount - 1);
@@ -287,9 +288,9 @@ function drawHeatmapSection(
   const maxValue = Math.max(...daily.map((row) => row.total), 0);
   const rightEdge = x + layout.width - 8;
   const leftColumnX = x + 8;
-  const totalInputTokens = daily.reduce((sum, row) => sum + Math.max(row.input, 0), 0);
-  const totalOutputTokens = daily.reduce((sum, row) => sum + Math.max(row.output, 0), 0);
-  const totalTokens = daily.reduce((sum, row) => sum + Math.max(row.total, 0), 0);
+  const totalInputTokens = daily.reduce((sum, row) => sum + row.input, 0);
+  const totalOutputTokens = daily.reduce((sum, row) => sum + row.output, 0);
+  const totalTokens = daily.reduce((sum, row) => sum + row.total, 0);
   const topMetricGap = 120;
   const headerInputX = rightEdge - topMetricGap * 2;
   const headerOutputX = rightEdge - topMetricGap;
@@ -432,7 +433,7 @@ function drawHeatmapSection(
         continue;
       }
 
-      const value = Math.max(valueByDate.get(day) ?? 0, 0);
+      const value = valueByDate.get(day) ?? 0;
       const colorIndex = defaultColourMap(value, maxValue, colors.length);
       const fill = colors[colorIndex];
 

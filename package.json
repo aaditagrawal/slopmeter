@@ -24,9 +24,6 @@
     "typescript": "latest"
   },
   "dependencies": {
-    "@ccusage/codex": "^18.0.8",
-    "@ccusage/opencode": "^18.0.8",
-    "ccusage": "^18.0.8",
     "ora": "^9.3.0",
     "ow": "^3.1.1",
     "sharp": "^0.34.5",

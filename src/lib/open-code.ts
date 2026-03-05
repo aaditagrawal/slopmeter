@@ -26,22 +26,13 @@ interface OpenCodeTokens {
 
 interface OpenCodeMessage {
   id: string;
-  providerID?: string;
-  modelID?: string;
-  time: { created?: number };
+  providerID: string;
+  modelID: string;
+  time: { created: number };
   tokens?: OpenCodeTokens;
 }
 
 function sumOpenCodeTokens(tokens?: OpenCodeTokens): DailyTokenTotals {
-  if (!tokens) {
-    return {
-      input: 0,
-      output: 0,
-      cache: { input: 0, output: 0 },
-      total: 0,
-    };
-  }
-
   const cacheInput = tokens?.cache?.read ?? 0;
   const cacheOutput = tokens?.cache?.write ?? 0;
   const input = (tokens?.input ?? 0) + cacheInput;
@@ -82,10 +73,6 @@ export async function loadOpenCodeRows(start: Date, end: Date): Promise<UsageSum
   const recentModelTotals = new Map<string, ModelTokenTotals>();
 
   for (const message of messages) {
-    if (!message.providerID || !message.modelID) {
-      continue;
-    }
-
     if (dedupe.has(message.id)) {
       continue;
     }
@@ -98,7 +85,7 @@ export async function loadOpenCodeRows(start: Date, end: Date): Promise<UsageSum
       continue;
     }
 
-    const date = new Date(message.time.created ?? Date.now());
+    const date = new Date(message.time.created);
 
     if (date < start || date > end) {
       continue;

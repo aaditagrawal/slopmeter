@@ -83,6 +83,6 @@ Model names are normalized to remove a trailing date suffix like `-20251101`.
 
 ## Data locations
 
-- Claude Code: `ccusage` data loader (timezone-aware display mode)
+- Claude Code: `$CLAUDE_CONFIG_DIR/*/projects` (comma-separated dirs) or defaults `~/.config/claude/projects` and `~/.claude/projects`
 - Codex: `$CODEX_HOME/sessions` or `~/.codex/sessions`
 - Open Code: `$OPENCODE_DATA_DIR/storage/message` or `~/.local/share/opencode/storage/message`

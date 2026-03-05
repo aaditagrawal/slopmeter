@@ -14,6 +14,37 @@ import {
 } from "./utils";
 
 interface CodexRawUsage {
+  input_tokens?: number;
+  cached_input_tokens?: number;
+  cache_read_input_tokens?: number;
+  output_tokens?: number;
+  reasoning_output_tokens?: number;
+  total_tokens?: number;
+}
+
+interface CodexEventInfo {
+  model?: string;
+  model_name?: string;
+  metadata?: { model?: string };
+  last_token_usage?: CodexRawUsage;
+  total_token_usage?: CodexRawUsage;
+}
+
+interface CodexEventPayload {
+  type?: string;
+  info?: CodexEventInfo;
+  model?: string;
+  model_name?: string;
+  metadata?: { model?: string };
+}
+
+interface CodexEventEntry {
+  type?: string;
+  timestamp: string;
+  payload?: CodexEventPayload;
+}
+
+interface CodexNormalizedUsage {
   input_tokens: number;
   cached_input_tokens: number;
   output_tokens: number;
@@ -21,35 +52,16 @@ interface CodexRawUsage {
   total_tokens: number;
 }
 
-interface CodexEventPayload {
-  type?: string;
-  info?: Record<string, unknown>;
-  model?: unknown;
-  model_name?: unknown;
-  metadata?: unknown;
-}
-
-interface CodexEventEntry {
-  type?: string;
-  timestamp?: string;
-  payload?: CodexEventPayload;
-}
-
-function numberOrZero(value: unknown) {
-  return typeof value === "number" && Number.isFinite(value) ? value : 0;
-}
-
-function normalizeCodexUsage(value: unknown) {
-  if (!value || typeof value !== "object") {
+function normalizeCodexUsage(value?: CodexRawUsage) {
+  if (!value) {
     return null;
   }
 
-  const record = value as Record<string, unknown>;
-  const input = numberOrZero(record.input_tokens);
-  const cached = numberOrZero(record.cached_input_tokens ?? record.cache_read_input_tokens);
-  const output = numberOrZero(record.output_tokens);
-  const reasoning = numberOrZero(record.reasoning_output_tokens);
-  const total = numberOrZero(record.total_tokens);
+  const input = value.input_tokens ?? 0;
+  const cached = value.cached_input_tokens ?? value.cache_read_input_tokens ?? 0;
+  const output = value.output_tokens ?? 0;
+  const reasoning = value.reasoning_output_tokens ?? 0;
+  const total = value.total_tokens ?? 0;
 
   return {
     input_tokens: input,
@@ -60,7 +72,7 @@ function normalizeCodexUsage(value: unknown) {
   };
 }
 
-function subtractCodexUsage(current: CodexRawUsage, previous: CodexRawUsage | null) {
+function subtractCodexUsage(current: CodexNormalizedUsage, previous: CodexNormalizedUsage | null) {
   return {
     input_tokens: Math.max(current.input_tokens - (previous?.input_tokens ?? 0), 0),
     cached_input_tokens: Math.max(current.cached_input_tokens - (previous?.cached_input_tokens ?? 0), 0),
@@ -73,39 +85,27 @@ function subtractCodexUsage(current: CodexRawUsage, previous: CodexRawUsage | nu
   };
 }
 
-function asNonEmptyString(value: unknown) {
-  if (typeof value !== "string") {
-    return undefined;
-  }
-
-  const trimmed = value.trim();
-
+function asNonEmptyString(value?: string) {
+  const trimmed = value?.trim();
   return trimmed === "" ? undefined : trimmed;
 }
 
-function extractCodexModel(payload: unknown) {
-  if (!payload || typeof payload !== "object") {
-    return undefined;
-  }
-
-  const entry = payload as Record<string, unknown>;
-  const directModel = asNonEmptyString(entry.model) ?? asNonEmptyString(entry.model_name);
+function extractCodexModel(payload?: CodexEventPayload) {
+  const directModel = asNonEmptyString(payload?.model) ?? asNonEmptyString(payload?.model_name);
 
   if (directModel) {
     return directModel;
   }
 
-  if (entry.info && typeof entry.info === "object") {
-    const infoRecord = entry.info as Record<string, unknown>;
-
-    const infoModel = asNonEmptyString(infoRecord.model) ?? asNonEmptyString(infoRecord.model_name);
+  if (payload?.info) {
+    const infoModel = asNonEmptyString(payload.info.model) ?? asNonEmptyString(payload.info.model_name);
 
     if (infoModel) {
       return infoModel;
     }
 
-    if (infoRecord.metadata && typeof infoRecord.metadata === "object") {
-      const model = asNonEmptyString((infoRecord.metadata as Record<string, unknown>).model);
+    if (payload.info.metadata) {
+      const model = asNonEmptyString(payload.info.metadata.model);
 
       if (model) {
         return model;
@@ -113,8 +113,8 @@ function extractCodexModel(payload: unknown) {
     }
   }
 
-  if (entry.metadata && typeof entry.metadata === "object") {
-    return asNonEmptyString((entry.metadata as Record<string, unknown>).model);
+  if (payload?.metadata) {
+    return asNonEmptyString(payload.metadata.model);
   }
 
   return undefined;
@@ -151,7 +151,7 @@ export async function loadCodexRows(start: Date, end: Date): Promise<UsageSummar
   const recentModelTotals = new Map<string, ModelTokenTotals>();
 
   for (const session of sessions) {
-    let previousTotals: CodexRawUsage | null = null;
+    let previousTotals: CodexNormalizedUsage | null = null;
     let currentModel: string | undefined;
 
     for (const entry of session) {
@@ -165,10 +165,6 @@ export async function loadCodexRows(start: Date, end: Date): Promise<UsageSummar
       }
 
       if (entry.type !== "event_msg" || entry.payload?.type !== "token_count") {
-        continue;
-      }
-
-      if (!entry.timestamp) {
         continue;
       }
 

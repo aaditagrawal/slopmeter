@@ -1,135 +1,195 @@
-import type { DailyUsage as CcusageDailyUsage } from "ccusage/data-loader";
+import { existsSync } from "node:fs";
+import { readFile } from "node:fs/promises";
+import { homedir } from "node:os";
+import { join, resolve } from "node:path";
 import type { UsageSummary } from "../interfaces";
 import {
   type DailyTokenTotals,
   type ModelTokenTotals,
+  addDailyTokenTotals,
   getProviderInsights,
   getRecentWindowStart,
+  listFilesRecursive,
   normalizeModelName,
+  totalsToRows,
 } from "./utils";
 
-interface ClaudeTokenEntry {
-  inputTokens: number;
-  outputTokens: number;
-  cacheCreationTokens: number;
-  cacheReadTokens: number;
+const CLAUDE_CONFIG_DIR_ENV = "CLAUDE_CONFIG_DIR";
+const CLAUDE_PROJECTS_DIR_NAME = "projects";
+
+interface ClaudeUsagePayload {
+  input_tokens?: number;
+  output_tokens?: number;
+  cache_creation_input_tokens?: number;
+  cache_read_input_tokens?: number;
 }
 
-function toCompactDate(date: Date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-
-  return `${y}${m}${d}`;
-}
-
-function getClaudeTokenTotals({
-  inputTokens,
-  outputTokens,
-  cacheCreationTokens,
-  cacheReadTokens,
-}: ClaudeTokenEntry): DailyTokenTotals {
-  return {
-    input: inputTokens + cacheReadTokens,
-    output: outputTokens + cacheCreationTokens,
-    cache: { input: cacheReadTokens, output: cacheCreationTokens },
-    total: inputTokens + outputTokens + cacheCreationTokens + cacheReadTokens,
+interface ClaudeRawLogEntry {
+  timestamp: string;
+  requestId?: string;
+  message: {
+    usage: ClaudeUsagePayload;
+    model?: string;
+    id?: string;
   };
 }
 
-function toDailyRows(daily: CcusageDailyUsage[], startDate: Date, endDate: Date) {
-  const recentStart = getRecentWindowStart(endDate, 30);
-  const modelTotals = new Map<string, ModelTokenTotals>();
-  const recentModelTotals = new Map<string, ModelTokenTotals>();
+interface ClaudeLogEntry {
+  timestamp: string;
+  usage: ClaudeUsagePayload;
+  model?: string;
+  messageId?: string;
+  requestId?: string;
+}
 
-  const rows = daily
-    .filter((entry) => {
-      const rowDate = new Date(entry.date);
-      return rowDate >= startDate && rowDate <= endDate;
-    })
-    .map((entry) => {
-      const dayTotals = getClaudeTokenTotals(entry);
-      const rowDate = new Date(entry.date);
-      const isRecent = rowDate >= recentStart;
+function getClaudeConfigPaths() {
+  const envPaths = (process.env[CLAUDE_CONFIG_DIR_ENV] ?? "").trim();
 
-      const breakdown = entry.modelBreakdowns
-        .map((model) => {
-          const tokens = getClaudeTokenTotals(model);
-          if (tokens.total <= 0) return null;
+  if (envPaths !== "") {
+    return envPaths
+      .split(",")
+      .map((path) => path.trim())
+      .filter((path) => path !== "")
+      .map((path) => resolve(path));
+  }
 
-          const name = normalizeModelName(model.modelName);
+  const xdgConfigHome = process.env.XDG_CONFIG_HOME?.trim() || join(homedir(), ".config");
 
-          const existing = modelTotals.get(name);
-          if (existing) {
-            existing.input += tokens.input;
-            existing.output += tokens.output;
-            existing.cache.input += tokens.cache.input;
-            existing.cache.output += tokens.cache.output;
-            existing.total += tokens.total;
-          } else {
-            modelTotals.set(name, { ...tokens });
-          }
+  return [join(xdgConfigHome, "claude"), join(homedir(), ".claude")];
+}
 
-          if (isRecent) {
-            const recentExisting = recentModelTotals.get(name);
-            if (recentExisting) {
-              recentExisting.input += tokens.input;
-              recentExisting.output += tokens.output;
-              recentExisting.cache.input += tokens.cache.input;
-              recentExisting.cache.output += tokens.cache.output;
-              recentExisting.total += tokens.total;
-            } else {
-              recentModelTotals.set(name, { ...tokens });
-            }
-          }
+function getClaudeProjectDirs() {
+  const unique = new Set<string>();
+  const dirs: string[] = [];
 
-          return {
-            name,
-            tokens: {
-              input: tokens.input,
-              output: tokens.output,
-              cache: { input: tokens.cache.input, output: tokens.cache.output },
-              total: tokens.total,
-            },
-          };
-        })
-        .filter((m): m is NonNullable<typeof m> => m !== null)
-        .sort((a, b) => b.tokens.total - a.tokens.total);
+  for (const basePath of getClaudeConfigPaths()) {
+    const projectsDir = join(basePath, CLAUDE_PROJECTS_DIR_NAME);
+    if (existsSync(projectsDir) && !unique.has(projectsDir)) {
+      unique.add(projectsDir);
+      dirs.push(projectsDir);
+    }
+  }
 
-      return {
-        input: dayTotals.input,
-        output: dayTotals.output,
-        cache: { input: dayTotals.cache.input, output: dayTotals.cache.output },
-        total: dayTotals.total,
-        breakdown,
-      };
-    })
-    .filter((row) => row.total > 0);
+  return dirs;
+}
 
-  return { rows, modelTotals, recentModelTotals };
+function parseClaudeLogEntry(entry: ClaudeRawLogEntry): ClaudeLogEntry {
+  return {
+    timestamp: entry.timestamp,
+    usage: entry.message.usage,
+    model: entry.message.model,
+    messageId: entry.message.id,
+    requestId: entry.requestId,
+  };
+}
+
+function createClaudeTokenTotals(usage: ClaudeUsagePayload): DailyTokenTotals {
+  const input = usage.input_tokens ?? 0;
+  const output = usage.output_tokens ?? 0;
+  const cacheInput = usage.cache_read_input_tokens ?? 0;
+  const cacheOutput = usage.cache_creation_input_tokens ?? 0;
+
+  return {
+    input,
+    output,
+    cache: { input: cacheInput, output: cacheOutput },
+    total: input + output + cacheInput + cacheOutput,
+  };
+}
+
+async function parseClaudeFile(filePath: string) {
+  const content = await readFile(filePath, "utf8");
+
+  return content
+    .split(/\r?\n/)
+    .filter((line) => line.trim() !== "")
+    .map((line) => parseClaudeLogEntry(JSON.parse(line) as ClaudeRawLogEntry));
+}
+
+async function parseClaudeFiles() {
+  const projectDirs = getClaudeProjectDirs();
+  const files = (
+    await Promise.all(projectDirs.map((projectDir) => listFilesRecursive(projectDir, ".jsonl")))
+  ).flat();
+
+  return Promise.all(files.map((file) => parseClaudeFile(file)));
+}
+
+function createUniqueHash(messageId?: string, requestId?: string) {
+  if (!messageId || !requestId) {
+    return null;
+  }
+
+  return `${messageId}:${requestId}`;
+}
+
+function addModelTotals(modelTotals: Map<string, ModelTokenTotals>, modelName: string, tokens: DailyTokenTotals) {
+  const existing = modelTotals.get(modelName);
+  if (existing) {
+    existing.input += tokens.input;
+    existing.output += tokens.output;
+    existing.cache.input += tokens.cache.input;
+    existing.cache.output += tokens.cache.output;
+    existing.total += tokens.total;
+  } else {
+    modelTotals.set(modelName, { ...tokens });
+  }
 }
 
 export async function loadClaudeRows(
   startDate: Date,
   endDate: Date,
-  timezone: string,
+  _timezone: string,
 ): Promise<UsageSummary> {
-  process.env.LOG_LEVEL ??= "0";
-  const { loadDailyUsageData } = await import("ccusage/data-loader");
+  const sessions = await parseClaudeFiles();
 
-  const usage = await loadDailyUsageData({
-    since: toCompactDate(startDate),
-    until: toCompactDate(endDate),
-    timezone,
-    mode: "display",
-    offline: true,
-  });
+  const totals = new Map<string, { tokens: DailyTokenTotals; models: Map<string, ModelTokenTotals> }>();
+  const modelTotals = new Map<string, ModelTokenTotals>();
+  const recentModelTotals = new Map<string, ModelTokenTotals>();
+  const recentStart = getRecentWindowStart(endDate, 30);
+  const processedHashes = new Set<string>();
 
-  const { rows, modelTotals, recentModelTotals } = toDailyRows(usage, startDate, endDate);
+  for (const session of sessions) {
+    for (const entry of session) {
+      const uniqueHash = createUniqueHash(entry.messageId, entry.requestId);
+      if (uniqueHash && processedHashes.has(uniqueHash)) {
+        continue;
+      }
+
+      if (uniqueHash) {
+        processedHashes.add(uniqueHash);
+      }
+
+      const timestamp = new Date(entry.timestamp);
+      if (timestamp < startDate || timestamp > endDate) {
+        continue;
+      }
+
+      const tokenTotals = createClaudeTokenTotals(entry.usage);
+      if (tokenTotals.total <= 0) {
+        continue;
+      }
+
+      const normalizedModelName = entry.model ? normalizeModelName(entry.model) : undefined;
+      const modelName = normalizedModelName && normalizedModelName !== "<synthetic>" ? normalizedModelName : undefined;
+
+      addDailyTokenTotals(totals, timestamp, tokenTotals, modelName);
+
+      if (!modelName) {
+        continue;
+      }
+
+      addModelTotals(modelTotals, modelName, tokenTotals);
+
+      if (timestamp >= recentStart) {
+        addModelTotals(recentModelTotals, modelName, tokenTotals);
+      }
+    }
+  }
 
   return {
     provider: "claude",
-    daily: rows,
+    daily: totalsToRows(totals),
     insights: getProviderInsights(modelTotals, recentModelTotals),
   };
 }

@@ -5,9 +5,6 @@
     "": {
       "name": "codegraph",
       "dependencies": {
-        "@ccusage/codex": "^18.0.8",
-        "@ccusage/opencode": "^18.0.8",
-        "ccusage": "^18.0.8",
         "ora": "^9.3.0",
         "ow": "^3.1.1",
         "sharp": "^0.34.5",
@@ -22,10 +19,6 @@
     },
   },
   "packages": {
-    "@ccusage/codex": ["@ccusage/codex@18.0.8", "", { "bin": { "ccusage-codex": "dist/index.js" } }, "sha512-cifZ+uPdbCE3gFSZeoNMdyMVkifa2F55wBVV9AnplcUaBGHUTN7GK8V6wd8f2SD0bx9aDN2WKsOW+YCQvHdCsg=="],
-
-    "@ccusage/opencode": ["@ccusage/opencode@18.0.8", "", { "bin": { "ccusage-opencode": "dist/index.js" } }, "sha512-jPeVPMsJfShagVnoAwuTxPMyHXh2OyFZNW79gBbpm0Uncwz5L7UPaO2lDtPcSaUU6BTgCuwRjzLsECmj8QGreA=="],
-
     "@emnapi/runtime": ["@emnapi/runtime@1.8.1", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-mehfKSMWjjNol8659Z8KxEMrdSJDDot5SXMq00dM8BN4o+CLNXQ0xH2V7EchNHV4RmbZLmmPdEaXZc5H2FXmDg=="],
 
     "@esbuild/aix-ppc64": ["@esbuild/aix-ppc64@0.27.3", "", { "os": "aix", "cpu": "ppc64" }, "sha512-9fJMTNFTWZMh5qwrBItuziu834eOCUcEqymSH7pY+zoMVEZg3gcPuBNxH1EvfVYe9h0x/Ptw8KBzv7qxb7l8dg=="],
@@ -205,8 +198,6 @@
     "cac": ["cac@6.7.14", "", {}, "sha512-b6Ilus+c3RrdDk+JhLKUAQfzzgLEPy6wcXqS7f/xe1EETvsDP6GORG7SFuOs6cID5YkqchW/LXZbX5bc8j7ZcQ=="],
 
     "callsites": ["callsites@4.2.0", "", {}, "sha512-kfzR4zzQtAE9PC7CzZsjl3aBNbXWuXiSeOCdLcPpBfGW8YuCqQHcRPFDbr/BPVmd3EEPVpuFzLyuT/cUhPr4OQ=="],
-
-    "ccusage": ["ccusage@18.0.8", "", { "bin": { "ccusage": "dist/index.js" } }, "sha512-9GLGh8FYNBRz5BSqF/cZ0/JtdO9X/vnwmk0kIRaye6UvFjpu/CtRaD4BhKtmErrU6V8dTXh+5bTnCSTi84qvQA=="],
 
     "chalk": ["chalk@5.6.2", "", {}, "sha512-7NzBL0rN6fMUW+f7A6Io4h40qQlG+xGmtMxfbnH/K7TAtt8JQWVQK+6g0UXKMeVJoyV5EkkNsErQ8pVD3bLHbA=="],
 
