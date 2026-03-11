@@ -190,6 +190,71 @@ function openCodeMessage(options: {
   });
 }
 
+function piSessionHeader(cwd = "/tmp") {
+  return JSON.stringify({
+    type: "session",
+    version: 3,
+    id: "pi-session-1",
+    timestamp: recentIso(),
+    cwd,
+  });
+}
+
+function piAssistantMessage(options: {
+  timestamp?: string;
+  model?: string;
+  input?: number;
+  output?: number;
+  cacheRead?: number;
+  cacheWrite?: number;
+  totalTokens?: number;
+}) {
+  const {
+    timestamp = recentIso(),
+    model = "gpt-5.4",
+    input = 10,
+    output = 6,
+    cacheRead = 0,
+    cacheWrite = 0,
+    totalTokens = input + output + cacheRead + cacheWrite,
+  } = options;
+
+  return JSON.stringify({
+    type: "message",
+    timestamp,
+    message: {
+      role: "assistant",
+      content: [{ type: "text", text: "done" }],
+      api: "openai-codex-responses",
+      provider: "openai-codex",
+      model,
+      usage: {
+        input,
+        output,
+        cacheRead,
+        cacheWrite,
+        totalTokens,
+      },
+      stopReason: "endTurn",
+      timestamp: Date.now(),
+    },
+  });
+}
+
+function piToolResultMessage(size: number) {
+  return JSON.stringify({
+    type: "message",
+    timestamp: recentIso(),
+    message: {
+      role: "toolResult",
+      toolCallId: "call-1",
+      toolName: "bash",
+      content: [{ type: "text", text: "x".repeat(size) }],
+      timestamp: Date.now(),
+    },
+  });
+}
+
 async function createOpenCodeDb(
   rootDir: string,
   rows: Array<{ id: string; created?: number; data: string }>,
@@ -458,6 +523,71 @@ test("--codex only loads Codex and only reports Codex availability", async (t) =
     ["codex"],
   );
   assert.equal(payload.providers[0]?.daily[0]?.total, 20);
+});
+
+test("--pi only loads Pi Coding Agent and ignores oversized irrelevant session records", async (t) => {
+  const workspace = createTempWorkspace("pi-only");
+
+  t.after(() => {
+    rmSync(workspace, { recursive: true, force: true });
+  });
+
+  const piAgentDir = join(workspace, "pi-agent");
+  const codexHome = join(workspace, "codex");
+  const claudeConfig = join(workspace, "claude");
+  const openCodeDir = join(workspace, "opencode");
+  const outputPath = join(workspace, "out.json");
+
+  writeJsonlFile(join(piAgentDir, "sessions", "session.jsonl"), [
+    piSessionHeader(workspace),
+    piToolResultMessage(4_096),
+    piAssistantMessage({
+      input: 12,
+      output: 7,
+      cacheRead: 2,
+      totalTokens: 21,
+    }),
+  ]);
+  writeJsonlFile(join(codexHome, "sessions", "bad.jsonl"), ['{"broken":true}']);
+  writeJsonFile(join(openCodeDir, "storage", "message", "bad.json"), "{");
+
+  const result = await runCli(
+    ["--pi", "--format", "json", "--output", outputPath],
+    {
+      PI_CODING_AGENT_DIR: piAgentDir,
+      CODEX_HOME: codexHome,
+      CLAUDE_CONFIG_DIR: claudeConfig,
+      OPENCODE_DATA_DIR: openCodeDir,
+      SLOPMETER_MAX_JSONL_RECORD_BYTES: "1024",
+    },
+  );
+
+  assert.equal(result.code, 0, result.stderr || result.stdout);
+  assert.match(result.stdout, /Pi Coding Agent found/);
+  assert.doesNotMatch(result.stdout, /Claude code/);
+  assert.doesNotMatch(result.stdout, /Codex/);
+  assert.doesNotMatch(result.stdout, /Open Code/);
+
+  const payload = JSON.parse(readFileSync(outputPath, "utf8")) as {
+    providers: Array<{
+      provider: string;
+      daily: Array<{
+        input: number;
+        output: number;
+        total: number;
+        breakdown: Array<{ name: string }>;
+      }>;
+    }>;
+  };
+
+  assert.deepEqual(
+    payload.providers.map((provider) => provider.provider),
+    ["pi"],
+  );
+  assert.equal(payload.providers[0]?.daily[0]?.input, 14);
+  assert.equal(payload.providers[0]?.daily[0]?.output, 7);
+  assert.equal(payload.providers[0]?.daily[0]?.total, 21);
+  assert.equal(payload.providers[0]?.daily[0]?.breakdown[0]?.name, "gpt-5.4");
 });
 
 test("Codex skips oversized irrelevant records and still counts token usage", async (t) => {

@@ -36,7 +36,12 @@
           "heatmap-opencode-1": "#d4d4d4",
           "heatmap-opencode-2": "#a3a3a3",
           "heatmap-opencode-3": "#525252",
-          "heatmap-opencode-4": "#171717"
+          "heatmap-opencode-4": "#171717",
+          "heatmap-pi-0": "#ecfdf5",
+          "heatmap-pi-1": "#a7f3d0",
+          "heatmap-pi-2": "#6ee7b7",
+          "heatmap-pi-3": "#10b981",
+          "heatmap-pi-4": "#047857"
         }
       },
       "files": [

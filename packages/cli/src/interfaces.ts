@@ -3,6 +3,7 @@ export type UsageProviderId =
   | "codex"
   | "cursor"
   | "opencode"
+  | "pi"
   | "crush"
   | "all";
 

@@ -139,7 +139,7 @@ async function findNestedCrushDataDirs(rootDir: string) {
       continue;
     }
 
-    let entries: Awaited<ReturnType<typeof readdir>>;
+    let entries: import("node:fs").Dirent<string>[];
 
     try {
       entries = await readdir(current.dir, { withFileTypes: true });
@@ -152,12 +152,14 @@ async function findNestedCrushDataDirs(rootDir: string) {
         continue;
       }
 
-      if (!isSearchableHomeDir(entry.name)) {
+      const name = String(entry.name);
+
+      if (!isSearchableHomeDir(name)) {
         continue;
       }
 
       queue.push({
-        dir: join(current.dir, entry.name),
+        dir: join(current.dir, name),
         depth: current.depth + 1,
       });
     }
@@ -463,11 +465,10 @@ export async function loadCrushRows(
     end,
   );
 
-  summary.insights = {
-    ...summary.insights,
-    mostUsedModel: getTopCrushModelByMessages(modelUsageRows),
-    recentMostUsedModel: getTopCrushModelByMessages(recentModelUsageRows),
-  };
+  if (summary.insights) {
+    summary.insights.mostUsedModel = getTopCrushModelByMessages(modelUsageRows);
+    summary.insights.recentMostUsedModel = getTopCrushModelByMessages(recentModelUsageRows);
+  }
 
   return summary;
 }

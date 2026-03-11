@@ -1,6 +1,6 @@
 # slopmeter
 
-CLI tool that generates usage heatmaps for Claude Code, Codex, Cursor, Open Code, and Crush for the rolling past year (ending today).
+CLI tool that generates usage heatmaps for Claude Code, Codex, Cursor, Open Code, Crush, and Pi Coding Agent for the rolling past year (ending today).
 
 ## Monorepo layout
 
@@ -61,6 +61,7 @@ slopmeter --codex
 slopmeter --cursor
 slopmeter --opencode
 slopmeter --crush
+slopmeter --pi
 ```
 
 ## What the image shows
@@ -99,6 +100,7 @@ Model names are normalized to remove a trailing date suffix like `-20251101`.
 
 - If no provider flags are passed, the CLI renders all providers with available data.
 - If `--all` is passed, the CLI renders one merged graph across all providers with consolidated totals, streaks, and model rankings.
+- Pi Coding Agent usage is derived from assistant messages in Pi session logs, grouped by the model that handled each turn.
 - If provider flags are passed, `slopmeter` only loads those providers and only prints availability for those providers.
 - If no provider flags are passed, the CLI loads all providers and prints availability for all providers.
 - If explicit provider flags are passed and any requested provider has no data, the command exits with an error.
@@ -119,6 +121,7 @@ Model names are normalized to remove a trailing date suffix like `-20251101`.
 - Codex now streams JSONL records and only parses records that affect usage aggregation.
 - Oversized irrelevant Codex records are skipped and summarized with a warning after processing.
 - Oversized relevant Codex records fail the affected file with a clear error that names the file, line number, byte cap, and `SLOPMETER_MAX_JSONL_RECORD_BYTES`.
+- Pi Coding Agent session logs are streamed and only assistant messages are parsed for usage aggregation.
 
 ## Data locations
 
@@ -127,3 +130,4 @@ Model names are normalized to remove a trailing date suffix like `-20251101`.
 - Cursor: reads `cursorAuth/accessToken` and `cursorAuth/refreshToken` from `$CURSOR_STATE_DB_PATH`, `$CURSOR_CONFIG_DIR/User/globalStorage/state.vscdb`, `~/Library/Application Support/Cursor/User/globalStorage/state.vscdb` (macOS), `%APPDATA%/Cursor/User/globalStorage/state.vscdb` (Windows), or `~/.config/Cursor/User/globalStorage/state.vscdb` (Linux), then loads usage from Cursor's CSV export endpoint
 - Open Code: prefers `$OPENCODE_DATA_DIR/opencode.db` or `~/.local/share/opencode/opencode.db`, and falls back to `$OPENCODE_DATA_DIR/storage/message` or `~/.local/share/opencode/storage/message`
 - Crush: reads `crush.db` from the current workspace `./.crush`, `~/.crush`, tracked Crush project data dirs listed in global `projects.json`, the global data dir itself, and project-local `.crush/crush.db` files discovered under `HOME` when Crush has not tracked them yet. The global metadata dir is discovered from `$CRUSH_GLOBAL_DATA`, `$XDG_DATA_HOME/crush`, `%LOCALAPPDATA%\\crush`, or `~/.local/share/crush`
+- Pi Coding Agent: `$PI_CODING_AGENT_DIR/sessions` or `~/.pi/agent/sessions`

@@ -15,6 +15,7 @@ export type CodegraphProviderId =
   | "codex"
   | "cursor"
   | "opencode"
+  | "pi"
   | "crush";
 
 export interface CodegraphModelUsage {
@@ -79,6 +80,7 @@ const heatmapVariants = cva("", {
         "[--heatmap-0:var(--heatmap-opencode-0)] [--heatmap-1:var(--heatmap-opencode-1)] [--heatmap-2:var(--heatmap-opencode-2)] [--heatmap-3:var(--heatmap-opencode-3)] [--heatmap-4:var(--heatmap-opencode-4)]",
       crush:
         "[--heatmap-0:var(--heatmap-crush-0)] [--heatmap-1:var(--heatmap-crush-1)] [--heatmap-2:var(--heatmap-crush-2)] [--heatmap-3:var(--heatmap-crush-3)] [--heatmap-4:var(--heatmap-crush-4)]",
+      pi: "[--heatmap-0:var(--heatmap-pi-0)] [--heatmap-1:var(--heatmap-pi-1)] [--heatmap-2:var(--heatmap-pi-2)] [--heatmap-3:var(--heatmap-pi-3)] [--heatmap-4:var(--heatmap-pi-4)]",
     },
   },
   defaultVariants: {

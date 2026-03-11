@@ -31,6 +31,7 @@ interface CliArgValues {
   codex: boolean;
   cursor: boolean;
   opencode: boolean;
+  pi: boolean;
   crush: boolean;
 }
 
@@ -44,7 +45,7 @@ const HELP_TEXT = `slopmeter
 Generate rolling 1-year usage heatmap image(s) (today is the latest day).
 
 Usage:
-  slopmeter [--all] [--claude] [--codex] [--cursor] [--opencode] [--crush] [--dark] [--format png|svg|json] [--output ./heatmap-last-year.png]
+  slopmeter [--all] [--claude] [--codex] [--cursor] [--opencode] [--pi] [--crush] [--dark] [--format png|svg|json] [--output ./heatmap-last-year.png]
 
 Options:
   --all                       Render one merged graph for all providers
@@ -52,6 +53,7 @@ Options:
   --codex                     Render Codex graph
   --cursor                    Render Cursor graph
   --opencode                  Render Open Code graph
+  --pi                        Render Pi Coding Agent graph
   --crush                     Render Crush graph
   --dark                      Render with the dark theme
   -f, --format                Output format: png, svg, or json (default: png)
@@ -76,6 +78,7 @@ function validateArgs(values: unknown): asserts values is CliArgValues {
       codex: ow.boolean,
       cursor: ow.boolean,
       opencode: ow.boolean,
+      pi: ow.boolean,
       crush: ow.boolean,
     }),
   );
@@ -191,7 +194,7 @@ function getOutputProviders(
 
   if (!merged) {
     throw new Error(
-      "No usage data found for Claude code, Codex, Cursor, Open Code, or Crush.",
+      "No usage data found for Claude Code, Codex, Cursor, Open Code, Pi Coding Agent, or Crush.",
     );
   }
 
@@ -226,7 +229,7 @@ function selectProvidersToRender(
 
   if (providersToRender.length === 0) {
     throw new Error(
-      "No usage data found for Claude code, Codex, Cursor, Open Code, or Crush.",
+      "No usage data found for Claude Code, Codex, Cursor, Open Code, Pi Coding Agent, or Crush.",
     );
   }
 
@@ -271,6 +274,7 @@ async function main() {
       codex: { type: "boolean", default: false },
       cursor: { type: "boolean", default: false },
       opencode: { type: "boolean", default: false },
+      pi: { type: "boolean", default: false },
       crush: { type: "boolean", default: false },
     },
     allowPositionals: false,

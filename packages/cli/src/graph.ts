@@ -156,6 +156,25 @@ export const heatmapThemes: Record<HeatmapThemeId, HeatmapTheme> = {
       ],
     },
   },
+  pi: {
+    title: "Pi Coding Agent",
+    colors: {
+      light: [
+        "#ecfdf5", // emerald-50
+        "#a7f3d0", // emerald-200
+        "#6ee7b7", // emerald-300
+        "#10b981", // emerald-500
+        "#047857", // emerald-700
+      ],
+      dark: [
+        "#022c22", // emerald-950
+        "#065f46", // emerald-800
+        "#059669", // emerald-600
+        "#34d399", // emerald-400
+        "#a7f3d0", // emerald-200
+      ],
+    },
+  },
   crush: {
     title: "Crush",
     colors: {
@@ -176,7 +195,7 @@ export const heatmapThemes: Record<HeatmapThemeId, HeatmapTheme> = {
     },
   },
   all: {
-    title: "Codex / Claude Code / Cursor / Open Code / Crush",
+    title: "Codex / Claude Code / Cursor / Open Code / Pi Coding Agent / Crush",
     titleCaption: "Total usage from",
     colors: {
       light: [
