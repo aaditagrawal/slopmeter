@@ -14,31 +14,38 @@ export { providerIds, providerStatusLabel, type ProviderId };
 interface AggregateUsageOptions {
   start: Date;
   end: Date;
-  providers?: ProviderId[];
+  requestedProviders?: ProviderId[];
+}
+
+export interface AggregateUsageResult {
+  rowsByProvider: Record<ProviderId, UsageSummary | null>;
+  warnings: string[];
 }
 
 export async function aggregateUsage({
   start,
   end,
-  providers,
-}: AggregateUsageOptions): Promise<Record<ProviderId, UsageSummary | null>> {
-  const requestedProviders = providers?.length ? providers : providerIds;
+  requestedProviders,
+}: AggregateUsageOptions): Promise<AggregateUsageResult> {
+  const providersToLoad =
+    requestedProviders?.length ? requestedProviders : providerIds;
   const rowsByProvider: Record<ProviderId, UsageSummary | null> = {
     claude: null,
     codex: null,
     opencode: null,
   };
+  const warnings: string[] = [];
 
-  for (const provider of requestedProviders) {
+  for (const provider of providersToLoad) {
     const summary =
       provider === "claude"
         ? await loadClaudeRows(start, end)
         : provider === "codex"
-          ? await loadCodexRows(start, end)
+          ? await loadCodexRows(start, end, warnings)
           : await loadOpenCodeRows(start, end);
 
     rowsByProvider[provider] = hasUsage(summary) ? summary : null;
   }
 
-  return rowsByProvider;
+  return { rowsByProvider, warnings };
 }

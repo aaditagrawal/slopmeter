@@ -1,4 +1,3 @@
-import { readFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 import type { UsageSummary } from "../interfaces";
@@ -12,6 +11,7 @@ import {
   getRecentWindowStart,
   listFilesRecursive,
   normalizeModelName,
+  readJsonDocument,
 } from "./utils";
 
 interface OpenCodeTokenCache {
@@ -48,9 +48,7 @@ function sumOpenCodeTokens(tokens?: OpenCodeTokens): DailyTokenTotals {
 }
 
 async function parseOpenCodeFile(filePath: string) {
-  const content = await readFile(filePath, "utf8");
-
-  return JSON.parse(content) as OpenCodeMessage;
+  return readJsonDocument<OpenCodeMessage>(filePath);
 }
 
 async function getOpenCodeFiles() {

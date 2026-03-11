@@ -3,16 +3,20 @@ import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 import type { UsageSummary } from "../interfaces";
 import {
+  DEFAULT_FILE_PROCESS_CONCURRENCY,
+  FILE_PROCESS_CONCURRENCY_ENV,
   type DailyTotalsByDate,
   type DailyTokenTotals,
   type ModelTokenTotals,
   addDailyTokenTotals,
   addModelTokenTotals,
   createUsageSummary,
-  forEachJsonLine,
+  getPositiveIntegerEnv,
   getRecentWindowStart,
   listFilesRecursive,
   normalizeModelName,
+  readJsonLines,
+  runWithConcurrency,
 } from "./utils";
 
 const CLAUDE_CONFIG_DIR_ENV = "CLAUDE_CONFIG_DIR";
@@ -133,19 +137,23 @@ export async function loadClaudeRows(
   const recentModelTotals = new Map<string, ModelTokenTotals>();
   const recentStart = getRecentWindowStart(endDate, 30);
   const processedHashes = new Set<string>();
+  const fileConcurrency = getPositiveIntegerEnv(
+    FILE_PROCESS_CONCURRENCY_ENV,
+    DEFAULT_FILE_PROCESS_CONCURRENCY,
+  );
 
-  for (const file of files) {
-    await forEachJsonLine<ClaudeRawLogEntry>(file, async (line) => {
+  await runWithConcurrency(files, fileConcurrency, async (file) => {
+    for await (const line of readJsonLines<ClaudeRawLogEntry>(file)) {
       const entry = parseClaudeLogEntry(line);
 
       if (!entry) {
-        return;
+        continue;
       }
 
       const uniqueHash = createUniqueHash(entry.messageId, entry.requestId);
 
       if (uniqueHash && processedHashes.has(uniqueHash)) {
-        return;
+        continue;
       }
 
       if (uniqueHash) {
@@ -155,13 +163,13 @@ export async function loadClaudeRows(
       const timestamp = new Date(entry.timestamp);
 
       if (timestamp < startDate || timestamp > endDate) {
-        return;
+        continue;
       }
 
       const tokenTotals = createClaudeTokenTotals(entry.usage);
 
       if (tokenTotals.total <= 0) {
-        return;
+        continue;
       }
 
       const modelName =
@@ -172,7 +180,7 @@ export async function loadClaudeRows(
       addDailyTokenTotals(totals, timestamp, tokenTotals, modelName);
 
       if (!modelName) {
-        return;
+        continue;
       }
 
       addModelTokenTotals(modelTotals, modelName, tokenTotals);
@@ -180,8 +188,8 @@ export async function loadClaudeRows(
       if (timestamp >= recentStart) {
         addModelTokenTotals(recentModelTotals, modelName, tokenTotals);
       }
-    });
-  }
+    }
+  });
 
   return createUsageSummary(
     "claude",

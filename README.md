@@ -93,9 +93,25 @@ Model names are normalized to remove a trailing date suffix like `-20251101`.
 ## Provider/data behavior
 
 - If no provider flags are passed, the CLI renders all providers with available data.
-- The CLI always prints provider availability lines (`found`/`not found`).
+- If provider flags are passed, `slopmeter` only loads those providers and only prints availability for those providers.
+- If no provider flags are passed, the CLI loads all providers and prints availability for all providers.
 - If explicit provider flags are passed and any requested provider has no data, the command exits with an error.
 - If no provider flags are passed and no provider has data, the command exits with an error.
+
+## Environment knobs
+
+- `SLOPMETER_FILE_PROCESS_CONCURRENCY`: positive integer file-processing limit for Claude Code and Codex JSONL files. Default: `4`.
+- `SLOPMETER_MAX_JSONL_RECORD_BYTES`: byte cap for Claude Code and Codex JSONL records and OpenCode JSON documents. Default: `67108864` (`64 MB`).
+
+## JSONL oversized-record behavior
+
+- Claude Code and Codex now share the same bounded JSONL record splitter and do not materialize whole files in memory.
+- Oversized Claude Code JSONL records fail the affected file with a clear error that names the file, line number, byte cap, and `SLOPMETER_MAX_JSONL_RECORD_BYTES`.
+- OpenCode JSON message files now use a bounded JSON document reader before `JSON.parse`.
+- Oversized OpenCode JSON documents fail the affected file with a clear error that names the file, byte cap, and `SLOPMETER_MAX_JSONL_RECORD_BYTES`.
+- Codex now streams JSONL records and only parses records that affect usage aggregation.
+- Oversized irrelevant Codex records are skipped and summarized with a warning after processing.
+- Oversized relevant Codex records fail the affected file with a clear error that names the file, line number, byte cap, and `SLOPMETER_MAX_JSONL_RECORD_BYTES`.
 
 ## Data locations
 

@@ -247,13 +247,18 @@ async function main() {
     const requestedProviders = getRequestedProviders(values);
     const inspectedProviders =
       requestedProviders.length > 0 ? requestedProviders : providerIds;
-    const rowsByProvider = await aggregateUsage({
+    const { rowsByProvider, warnings } = await aggregateUsage({
       start,
       end,
-      providers: inspectedProviders,
+      requestedProviders,
     });
 
     spinner.stop();
+
+    for (const warning of warnings) {
+      process.stderr.write(`${warning}\n`);
+    }
+
     printProviderAvailability(rowsByProvider, inspectedProviders);
 
     const exportProviders = selectProvidersToRender(
