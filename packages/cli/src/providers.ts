@@ -1,6 +1,7 @@
 import type { UsageSummary } from "./interfaces";
 import { loadClaudeRows } from "./lib/claude-code";
 import { loadCodexRows } from "./lib/codex";
+import { loadCursorRows } from "./lib/cursor";
 import {
   providerIds,
   providerStatusLabel,
@@ -49,6 +50,7 @@ export async function aggregateUsage({
   const rowsByProvider: Record<ProviderId, UsageSummary | null> = {
     claude: null,
     codex: null,
+    cursor: null,
     opencode: null,
     pi: null,
   };
@@ -60,9 +62,11 @@ export async function aggregateUsage({
         ? await loadClaudeRows(start, end)
         : provider === "codex"
           ? await loadCodexRows(start, end, warnings)
-          : provider === "opencode"
-            ? await loadOpenCodeRows(start, end)
-            : await loadPiRows(start, end);
+          : provider === "cursor"
+            ? await loadCursorRows(start, end)
+            : provider === "opencode"
+              ? await loadOpenCodeRows(start, end)
+              : await loadPiRows(start, end);
 
     rowsByProvider[provider] = hasUsage(summary) ? summary : null;
   }

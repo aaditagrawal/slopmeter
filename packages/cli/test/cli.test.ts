@@ -11,6 +11,7 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import test from "node:test";
+import { summarizeCursorUsageCsv } from "../src/lib/cursor";
 
 const cliPath = resolve(import.meta.dirname, "../dist/cli.js");
 const cliRuntime = process.release.name === "node" ? process.execPath : "node";
@@ -34,6 +35,14 @@ function recentDate(daysAgo = 0) {
   date.setDate(date.getDate() - daysAgo);
 
   return date.toISOString().slice(0, 10);
+}
+
+function formatLocalDate(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
 }
 
 function ensureParent(path: string) {
@@ -539,6 +548,61 @@ test("Claude JSONL streaming preserves usage results across multiple files", asy
     ["claude"],
   );
   assert.equal(payload.providers[0]?.daily[0]?.total, 25);
+});
+
+test("Cursor streams CSV rows without buffering the full export", async () => {
+  const encoder = new TextEncoder();
+  const response = new Response(
+    new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(
+          encoder.encode(
+            "Date,Model,Input (w/ Cache Write),Input (w/o Cache Write),Cache Read,Output Tokens,Total Tokens\r\n",
+          ),
+        );
+        controller.enqueue(encoder.encode(`${recentDate(1)},"gpt`));
+        controller.enqueue(encoder.encode(`-5",2,3,4,5,14\r\n`));
+        controller.enqueue(
+          encoder.encode(`${recentDate(0)},gpt-5,1,1,0,2,4\r\n`),
+        );
+        controller.close();
+      },
+    }),
+    {
+      headers: {
+        "content-type": "text/csv; charset=utf-8",
+      },
+    },
+  );
+
+  const summary = await summarizeCursorUsageCsv(
+    response,
+    new Date(`${recentDate(30)}T00:00:00`),
+    new Date(`${recentDate(0)}T23:59:59.999`),
+  );
+
+  assert.deepEqual(
+    summary.daily.map((day) => ({
+      date: formatLocalDate(day.date),
+      total: day.total,
+      model: day.breakdown[0]?.name,
+      modelTotal: day.breakdown[0]?.tokens.total,
+    })),
+    [
+      {
+        date: recentDate(1),
+        total: 14,
+        model: "gpt-5",
+        modelTotal: 14,
+      },
+      {
+        date: recentDate(0),
+        total: 4,
+        model: "gpt-5",
+        modelTotal: 4,
+      },
+    ],
+  );
 });
 
 test("Claude falls back to stats-cache.json for older layouts without double counting project logs", async (t) => {

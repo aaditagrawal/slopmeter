@@ -1,6 +1,6 @@
 # slopmeter
 
-`slopmeter` is a Node.js CLI that scans local Claude Code, Codex, Open Code, and Pi Coding Agent usage data and generates a contribution-style heatmap for the rolling past year.
+`slopmeter` is a Node.js CLI that scans local Claude Code, Codex, Cursor, Open Code, and Pi Coding Agent usage data and generates a contribution-style heatmap for the rolling past year.
 
 ## Requirements
 
@@ -24,7 +24,7 @@ slopmeter
 ## Usage
 
 ```bash
-slopmeter [--all] [--claude] [--codex] [--opencode] [--pi] [--dark] [--format png|svg|json] [--output ./heatmap-last-year.png]
+slopmeter [--all] [--claude] [--codex] [--cursor] [--opencode] [--pi] [--dark] [--format png|svg|json] [--output ./heatmap-last-year.png]
 ```
 
 By default, the CLI:
@@ -37,6 +37,7 @@ By default, the CLI:
 
 - `--claude`: include only Claude Code data
 - `--codex`: include only Codex data
+- `--cursor`: include only Cursor data
 - `--opencode`: include only Open Code data
 - `--pi`: include only Pi Coding Agent data
 - `--all`: merge all providers into one combined graph
@@ -71,6 +72,12 @@ Render only Codex usage:
 npx slopmeter --codex
 ```
 
+Render only Cursor usage:
+
+```bash
+npx slopmeter --cursor
+```
+
 Render only Pi Coding Agent usage:
 
 ```bash
@@ -103,6 +110,7 @@ npx slopmeter --dark --format svg --output ./out/heatmap-dark.svg
 - Older Claude Code layouts: falls back to `$CLAUDE_CONFIG_DIR/stats-cache.json`, `~/.config/claude/stats-cache.json`, or `~/.claude/stats-cache.json` for days not present in project logs
 - Earliest Claude Code activity fallback: uses `$CLAUDE_CONFIG_DIR/history.jsonl`, `~/.config/claude/history.jsonl`, or `~/.claude/history.jsonl` to mark activity-only days when token totals are unavailable
 - Codex: `$CODEX_HOME/sessions` or `~/.codex/sessions`
+- Cursor: reads `cursorAuth/accessToken` and `cursorAuth/refreshToken` from `$CURSOR_STATE_DB_PATH`, `$CURSOR_CONFIG_DIR/User/globalStorage/state.vscdb`, `~/Library/Application Support/Cursor/User/globalStorage/state.vscdb` (macOS), `%APPDATA%/Cursor/User/globalStorage/state.vscdb` (Windows), or `~/.config/Cursor/User/globalStorage/state.vscdb` (Linux), then loads usage from Cursor's CSV export endpoint
 - Open Code: prefers `$OPENCODE_DATA_DIR/opencode.db` or `~/.local/share/opencode/opencode.db`, and falls back to `$OPENCODE_DATA_DIR/storage/message` or `~/.local/share/opencode/storage/message`
 - Pi Coding Agent: `$PI_CODING_AGENT_DIR/sessions` or `~/.pi/agent/sessions`
 
