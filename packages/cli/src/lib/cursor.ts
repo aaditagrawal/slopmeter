@@ -66,8 +66,7 @@ function getCursorDefaultStateDbPath() {
 
   if (process.platform === "win32") {
     const appData =
-      process.env.APPDATA?.trim() ||
-      join(homedir(), "AppData", "Roaming");
+      process.env.APPDATA?.trim() || join(homedir(), "AppData", "Roaming");
 
     return join(appData, "Cursor", CURSOR_STATE_DB_RELATIVE_PATH);
   }
@@ -312,7 +311,8 @@ async function fetchCursorUsageCsv(accessToken: string) {
 
   const summary = failures
     .map((failure) => {
-      const statusLine = `${failure.label}: ${failure.status} ${failure.statusText}`.trim();
+      const statusLine =
+        `${failure.label}: ${failure.status} ${failure.statusText}`.trim();
 
       return failure.body ? `${statusLine} (${failure.body})` : statusLine;
     })
@@ -623,13 +623,25 @@ export async function loadCursorRows(
   const recentModelTotals = new Map<string, ModelTokenTotals>();
 
   if (!databasePath) {
-    return createUsageSummary("cursor", totals, modelTotals, recentModelTotals, end);
+    return createUsageSummary(
+      "cursor",
+      totals,
+      modelTotals,
+      recentModelTotals,
+      end,
+    );
   }
 
   const authState = await readCursorAuthState(databasePath);
 
   if (!authState.accessToken) {
-    return createUsageSummary("cursor", totals, modelTotals, recentModelTotals, end);
+    return createUsageSummary(
+      "cursor",
+      totals,
+      modelTotals,
+      recentModelTotals,
+      end,
+    );
   }
 
   const recentStart = getRecentWindowStart(end, 30);
@@ -660,5 +672,11 @@ export async function summarizeCursorUsageCsv(
     );
   });
 
-  return createUsageSummary("cursor", totals, modelTotals, recentModelTotals, end);
+  return createUsageSummary(
+    "cursor",
+    totals,
+    modelTotals,
+    recentModelTotals,
+    end,
+  );
 }

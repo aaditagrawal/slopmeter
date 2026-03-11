@@ -31,6 +31,7 @@ interface CliArgValues {
   codex: boolean;
   cursor: boolean;
   opencode: boolean;
+  pi: boolean;
 }
 
 const PNG_BASE_WIDTH = 1000;
@@ -43,7 +44,7 @@ const HELP_TEXT = `slopmeter
 Generate rolling 1-year usage heatmap image(s) (today is the latest day).
 
 Usage:
-  slopmeter [--all] [--claude] [--codex] [--cursor] [--opencode] [--dark] [--format png|svg|json] [--output ./heatmap-last-year.png]
+  slopmeter [--all] [--claude] [--codex] [--cursor] [--opencode] [--pi] [--dark] [--format png|svg|json] [--output ./heatmap-last-year.png]
 
 Options:
   --all                       Render one merged graph for all providers
@@ -51,6 +52,7 @@ Options:
   --codex                     Render Codex graph
   --cursor                    Render Cursor graph
   --opencode                  Render Open Code graph
+  --pi                        Render Pi Coding Agent graph
   --dark                      Render with the dark theme
   -f, --format                Output format: png, svg, or json (default: png)
   -o, --output                Output file path (default: ./heatmap-last-year.png)
@@ -74,6 +76,7 @@ function validateArgs(values: unknown): asserts values is CliArgValues {
       codex: ow.boolean,
       cursor: ow.boolean,
       opencode: ow.boolean,
+      pi: ow.boolean,
     }),
   );
 }
@@ -178,14 +181,17 @@ function getOutputProviders(
   end: Date,
 ) {
   if (!values.all) {
-    return selectProvidersToRender(rowsByProvider, getRequestedProviders(values));
+    return selectProvidersToRender(
+      rowsByProvider,
+      getRequestedProviders(values),
+    );
   }
 
   const merged = mergeProviderUsage(rowsByProvider, end);
 
   if (!merged) {
     throw new Error(
-      "No usage data found for Claude code, Codex, Cursor, or Open code.",
+      "No usage data found for Claude Code, Codex, Cursor, Open Code, or Pi Coding Agent.",
     );
   }
 
@@ -220,7 +226,7 @@ function selectProvidersToRender(
 
   if (providersToRender.length === 0) {
     throw new Error(
-      "No usage data found for Claude code, Codex, Cursor, or Open code.",
+      "No usage data found for Claude Code, Codex, Cursor, Open Code, or Pi Coding Agent.",
     );
   }
 
@@ -265,6 +271,7 @@ async function main() {
       codex: { type: "boolean", default: false },
       cursor: { type: "boolean", default: false },
       opencode: { type: "boolean", default: false },
+      pi: { type: "boolean", default: false },
     },
     allowPositionals: false,
   });
@@ -288,7 +295,9 @@ async function main() {
     const { start, end } = getDateWindow();
     const colorMode: ColorMode = values.dark ? "dark" : "light";
     const format = inferFormat(values.format, values.output);
-    const requestedProviders = values.all ? providerIds : getRequestedProviders(values);
+    const requestedProviders = values.all
+      ? providerIds
+      : getRequestedProviders(values);
     const inspectedProviders =
       requestedProviders.length > 0 ? requestedProviders : providerIds;
     const { rowsByProvider, warnings } = await aggregateUsage({
@@ -305,11 +314,7 @@ async function main() {
 
     printProviderAvailability(rowsByProvider, inspectedProviders);
 
-    const exportProviders = getOutputProviders(
-      values,
-      rowsByProvider,
-      end,
-    );
+    const exportProviders = getOutputProviders(values, rowsByProvider, end);
 
     const outputPath = resolve(
       values.output ?? `./heatmap-last-year.${format}`,

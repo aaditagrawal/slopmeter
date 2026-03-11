@@ -155,8 +155,27 @@ export const heatmapThemes: Record<HeatmapThemeId, HeatmapTheme> = {
       ],
     },
   },
+  pi: {
+    title: "Pi Coding Agent",
+    colors: {
+      light: [
+        "#ecfdf5", // emerald-50
+        "#a7f3d0", // emerald-200
+        "#6ee7b7", // emerald-300
+        "#10b981", // emerald-500
+        "#047857", // emerald-700
+      ],
+      dark: [
+        "#022c22", // emerald-950
+        "#065f46", // emerald-800
+        "#059669", // emerald-600
+        "#34d399", // emerald-400
+        "#a7f3d0", // emerald-200
+      ],
+    },
+  },
   all: {
-    title: "Codex / Claude Code / Cursor / Open Code",
+    title: "Codex / Claude Code / Cursor / Open Code / Pi Coding Agent",
     titleCaption: "Total usage from",
     colors: {
       light: [
@@ -334,8 +353,7 @@ function getSectionLayout(weekCount: number) {
   const leftLabelWidth = 34;
   const rightPadding = 20;
   const headerCaptionY = 0;
-  const headerValueY =
-    headerCaptionY + metricCaptionFontSize + captionValueGap;
+  const headerValueY = headerCaptionY + metricCaptionFontSize + captionValueGap;
   const topMetricHeight = headerValueY + metricValueFontSize;
   const topPadding = Math.max(providerTitleFontSize, topMetricHeight) + 20;
   const monthHeaderHeight = 20;
@@ -349,8 +367,7 @@ function getSectionLayout(weekCount: number) {
   const noteY = legendBottomY + 14;
   const footerTopPadding = 48;
   const footerCaptionY = legendBottomY + footerTopPadding;
-  const footerValueY =
-    footerCaptionY + metricCaptionFontSize + captionValueGap;
+  const footerValueY = footerCaptionY + metricCaptionFontSize + captionValueGap;
   const statsBottomPadding = 12;
   const width = leftLabelWidth + gridWidth + rightPadding;
   const height = footerValueY + metricValueFontSize + statsBottomPadding;
@@ -411,7 +428,10 @@ function drawHeatmapSection(
       if (!firstActivityOnlyDate || dateKey < firstActivityOnlyDate) {
         firstActivityOnlyDate = dateKey;
       }
-    } else if (row.total > 0 && (!firstMeasuredDate || dateKey < firstMeasuredDate)) {
+    } else if (
+      row.total > 0 &&
+      (!firstMeasuredDate || dateKey < firstMeasuredDate)
+    ) {
       firstMeasuredDate = dateKey;
     }
     totalInputTokens += row.input;
@@ -611,7 +631,8 @@ function drawHeatmapSection(
         maxValue,
         colorsForMode.length,
       );
-      const fill = value <= 0 ? emptyCellFill[colorMode] : colorsForMode[colorIndex];
+      const fill =
+        value <= 0 ? emptyCellFill[colorMode] : colorsForMode[colorIndex];
       const dayX =
         x + layout.leftLabelWidth + weekIndex * (layout.cellSize + layout.gap);
       const dayY =
@@ -673,8 +694,7 @@ function drawHeatmapSection(
 
   if (firstActivityOnlyDate && firstMeasuredDate) {
     const noteX = x + layout.width / 2;
-    const noteY =
-      y + layout.gridTop + 7 * layout.cellSize + 6 * layout.gap + 8;
+    const noteY = y + layout.gridTop + 7 * layout.cellSize + 6 * layout.gap + 8;
 
     svg = svg.text(
       {

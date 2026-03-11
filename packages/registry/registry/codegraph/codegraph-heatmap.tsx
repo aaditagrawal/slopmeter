@@ -10,7 +10,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-export type CodegraphProviderId = "claude" | "codex" | "cursor" | "opencode";
+export type CodegraphProviderId =
+  | "claude"
+  | "codex"
+  | "cursor"
+  | "opencode"
+  | "pi";
 
 export interface CodegraphModelUsage {
   name: string;
@@ -68,6 +73,7 @@ const heatmapVariants = cva("", {
         "[--heatmap-0:var(--heatmap-cursor-0)] [--heatmap-1:var(--heatmap-cursor-1)] [--heatmap-2:var(--heatmap-cursor-2)] [--heatmap-3:var(--heatmap-cursor-3)] [--heatmap-4:var(--heatmap-cursor-4)]",
       opencode:
         "[--heatmap-0:var(--heatmap-opencode-0)] [--heatmap-1:var(--heatmap-opencode-1)] [--heatmap-2:var(--heatmap-opencode-2)] [--heatmap-3:var(--heatmap-opencode-3)] [--heatmap-4:var(--heatmap-opencode-4)]",
+      pi: "[--heatmap-0:var(--heatmap-pi-0)] [--heatmap-1:var(--heatmap-pi-1)] [--heatmap-2:var(--heatmap-pi-2)] [--heatmap-3:var(--heatmap-pi-3)] [--heatmap-4:var(--heatmap-pi-4)]",
     },
   },
   defaultVariants: {
@@ -246,11 +252,7 @@ interface MetricProps {
   muted?: boolean;
 }
 
-function Metric({
-  caption,
-  value,
-  muted,
-}: MetricProps) {
+function Metric({ caption, value, muted }: MetricProps) {
   return (
     <div className="flex min-w-[120px] flex-col items-end text-right">
       <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
