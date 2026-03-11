@@ -10,7 +10,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-export type CodegraphProviderId = "claude" | "codex" | "cursor" | "opencode";
+export type CodegraphProviderId =
+  | "claude"
+  | "codex"
+  | "cursor"
+  | "opencode"
+  | "crush";
 
 export interface CodegraphModelUsage {
   name: string;
@@ -22,6 +27,10 @@ export interface CodegraphModelUsage {
       output: number;
     };
     total: number;
+  };
+  metric?: {
+    unit: "tokens" | "messages";
+    value: number;
   };
 }
 
@@ -68,6 +77,8 @@ const heatmapVariants = cva("", {
         "[--heatmap-0:var(--heatmap-cursor-0)] [--heatmap-1:var(--heatmap-cursor-1)] [--heatmap-2:var(--heatmap-cursor-2)] [--heatmap-3:var(--heatmap-cursor-3)] [--heatmap-4:var(--heatmap-cursor-4)]",
       opencode:
         "[--heatmap-0:var(--heatmap-opencode-0)] [--heatmap-1:var(--heatmap-opencode-1)] [--heatmap-2:var(--heatmap-opencode-2)] [--heatmap-3:var(--heatmap-opencode-3)] [--heatmap-4:var(--heatmap-opencode-4)]",
+      crush:
+        "[--heatmap-0:var(--heatmap-crush-0)] [--heatmap-1:var(--heatmap-crush-1)] [--heatmap-2:var(--heatmap-crush-2)] [--heatmap-3:var(--heatmap-crush-3)] [--heatmap-4:var(--heatmap-crush-4)]",
     },
   },
   defaultVariants: {
@@ -175,6 +186,14 @@ function formatTokenTotal(value: number) {
   return new Intl.NumberFormat("en-US").format(value);
 }
 
+function formatModelUsageMetric(model: CodegraphModelUsage) {
+  if (model.metric?.unit === "messages") {
+    return `${new Intl.NumberFormat("en-US").format(model.metric.value)} msgs`;
+  }
+
+  return formatTokenTotal(model.tokens.total);
+}
+
 function computeStreaks(allDays: string[], valueByDate: Map<string, number>) {
   let longestStreak = 0;
   let running = 0;
@@ -246,11 +265,7 @@ interface MetricProps {
   muted?: boolean;
 }
 
-function Metric({
-  caption,
-  value,
-  muted,
-}: MetricProps) {
+function Metric({ caption, value, muted }: MetricProps) {
   return (
     <div className="flex min-w-[120px] flex-col items-end text-right">
       <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -463,23 +478,25 @@ function AgentUsageHeatmapSection({
       </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-4">
-        {provider.insights?.mostUsedModel ? (
-          <Metric
-            caption="Most used model"
-            value={`${provider.insights.mostUsedModel.name} (${formatTokenTotal(provider.insights.mostUsedModel.tokens.total)})`}
-          />
-        ) : (
-          <div />
-        )}
+        <Metric
+          caption="Most used model"
+          value={
+            provider.insights?.mostUsedModel
+              ? `${provider.insights.mostUsedModel.name} (${formatModelUsageMetric(provider.insights.mostUsedModel)})`
+              : "Not tracked"
+          }
+          muted={!provider.insights?.mostUsedModel}
+        />
 
-        {provider.insights?.recentMostUsedModel ? (
-          <Metric
-            caption="Recent use (last 30 days)"
-            value={`${provider.insights.recentMostUsedModel.name} (${formatTokenTotal(provider.insights.recentMostUsedModel.tokens.total)})`}
-          />
-        ) : (
-          <div />
-        )}
+        <Metric
+          caption="Recent use (last 30 days)"
+          value={
+            provider.insights?.recentMostUsedModel
+              ? `${provider.insights.recentMostUsedModel.name} (${formatModelUsageMetric(provider.insights.recentMostUsedModel)})`
+              : "Not tracked"
+          }
+          muted={!provider.insights?.recentMostUsedModel}
+        />
 
         <Metric caption="Longest streak" value={`${longestStreak} days`} />
         <Metric caption="Current streak" value={`${currentStreak} days`} />

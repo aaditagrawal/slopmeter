@@ -62,7 +62,8 @@ interface RenderUsageHeatmapsSvgSection {
 
 interface ModelUsageRow {
   caption: string;
-  data: ModelUsage;
+  data?: ModelUsage;
+  placeholder?: string;
 }
 
 interface RenderUsageHeatmapsSvgOptions {
@@ -155,8 +156,27 @@ export const heatmapThemes: Record<HeatmapThemeId, HeatmapTheme> = {
       ],
     },
   },
+  crush: {
+    title: "Crush",
+    colors: {
+      light: [
+        "#fff1f2", // rose-50
+        "#fecdd3", // rose-200
+        "#fda4af", // rose-300
+        "#fb7185", // rose-400
+        "#be123c", // rose-700
+      ],
+      dark: [
+        "#4c0519", // rose-950
+        "#9f1239", // rose-800
+        "#e11d48", // rose-600
+        "#fb7185", // rose-400
+        "#fecdd3", // rose-200
+      ],
+    },
+  },
   all: {
-    title: "Codex / Claude Code / Cursor / Open Code",
+    title: "Codex / Claude Code / Cursor / Open Code / Crush",
     titleCaption: "Total usage from",
     colors: {
       light: [
@@ -227,6 +247,14 @@ function formatTokenTotal(value: number) {
   }
 
   return numberFormatter.format(value);
+}
+
+function formatModelUsageMetric(model: ModelUsage) {
+  if (model.metric?.unit === "messages") {
+    return `${numberFormatter.format(model.metric.value)} msgs`;
+  }
+
+  return formatTokenTotal(model.tokens.total);
 }
 
 function truncateText(value: string, maxLength: number) {
@@ -334,8 +362,7 @@ function getSectionLayout(weekCount: number) {
   const leftLabelWidth = 34;
   const rightPadding = 20;
   const headerCaptionY = 0;
-  const headerValueY =
-    headerCaptionY + metricCaptionFontSize + captionValueGap;
+  const headerValueY = headerCaptionY + metricCaptionFontSize + captionValueGap;
   const topMetricHeight = headerValueY + metricValueFontSize;
   const topPadding = Math.max(providerTitleFontSize, topMetricHeight) + 20;
   const monthHeaderHeight = 20;
@@ -349,8 +376,7 @@ function getSectionLayout(weekCount: number) {
   const noteY = legendBottomY + 14;
   const footerTopPadding = 48;
   const footerCaptionY = legendBottomY + footerTopPadding;
-  const footerValueY =
-    footerCaptionY + metricCaptionFontSize + captionValueGap;
+  const footerValueY = footerCaptionY + metricCaptionFontSize + captionValueGap;
   const statsBottomPadding = 12;
   const width = leftLabelWidth + gridWidth + rightPadding;
   const height = footerValueY + metricValueFontSize + statsBottomPadding;
@@ -411,7 +437,10 @@ function drawHeatmapSection(
       if (!firstActivityOnlyDate || dateKey < firstActivityOnlyDate) {
         firstActivityOnlyDate = dateKey;
       }
-    } else if (row.total > 0 && (!firstMeasuredDate || dateKey < firstMeasuredDate)) {
+    } else if (
+      row.total > 0 &&
+      (!firstMeasuredDate || dateKey < firstMeasuredDate)
+    ) {
       firstMeasuredDate = dateKey;
     }
     totalInputTokens += row.input;
@@ -611,7 +640,8 @@ function drawHeatmapSection(
         maxValue,
         colorsForMode.length,
       );
-      const fill = value <= 0 ? emptyCellFill[colorMode] : colorsForMode[colorIndex];
+      const fill =
+        value <= 0 ? emptyCellFill[colorMode] : colorsForMode[colorIndex];
       const dayX =
         x + layout.leftLabelWidth + weekIndex * (layout.cellSize + layout.gap);
       const dayY =
@@ -673,8 +703,7 @@ function drawHeatmapSection(
 
   if (firstActivityOnlyDate && firstMeasuredDate) {
     const noteX = x + layout.width / 2;
-    const noteY =
-      y + layout.gridTop + 7 * layout.cellSize + 6 * layout.gap + 8;
+    const noteY = y + layout.gridTop + 7 * layout.cellSize + 6 * layout.gap + 8;
 
     svg = svg.text(
       {
@@ -694,25 +723,23 @@ function drawHeatmapSection(
   const leftSecondaryX = leftColumnX + 250;
   const rightPrimaryX = rightColumnX - 160;
 
-  const leftRows: ModelUsageRow[] = [];
-
-  if (insights?.mostUsedModel) {
-    leftRows.push({ caption: "Most used model", data: insights.mostUsedModel });
-  }
-
-  if (insights?.recentMostUsedModel) {
-    leftRows.push({
+  const leftRows: ModelUsageRow[] = [
+    {
+      caption: "Most used model",
+      data: insights?.mostUsedModel,
+      placeholder: "Not tracked",
+    },
+    {
       caption: "Recent use (last 30 days)",
-      data: insights.recentMostUsedModel,
-    });
-  }
+      data: insights?.recentMostUsedModel,
+      placeholder: "Not tracked",
+    },
+  ];
 
   for (const [index, row] of leftRows.entries()) {
     const captionY = layout.footerCaptionY;
     const valueY = layout.footerValueY;
-    const modelName = truncateText(row.data.name, 20);
     const modelX = index === 0 ? leftColumnX : leftSecondaryX;
-    const tokenLabel = `(${formatTokenTotal(row.data.tokens.total)})`;
 
     svg = svg.text(
       {
@@ -734,7 +761,9 @@ function drawHeatmapSection(
         "dominant-baseline": "hanging",
         "font-family": fontFamily,
       },
-      `<tspan fill="${palette.text}" font-size="${metricValueFontSize}" font-weight="600">${escapeXml(modelName)}</tspan><tspan dx="6" fill="${palette.muted}" font-size="${metricValueFontSize}" font-weight="400">${tokenLabel}</tspan>`,
+      row.data
+        ? `<tspan fill="${palette.text}" font-size="${metricValueFontSize}" font-weight="600">${escapeXml(truncateText(row.data.name, 20))}</tspan><tspan dx="6" fill="${palette.muted}" font-size="${metricValueFontSize}" font-weight="400">(${escapeXml(formatModelUsageMetric(row.data))})</tspan>`
+        : `<tspan fill="${palette.muted}" font-size="${metricValueFontSize}" font-weight="500">${escapeXml(row.placeholder ?? "Unavailable")}</tspan>`,
     );
   }
 

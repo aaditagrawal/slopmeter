@@ -1,4 +1,10 @@
-export type UsageProviderId = "claude" | "codex" | "cursor" | "opencode" | "all";
+export type UsageProviderId =
+  | "claude"
+  | "codex"
+  | "cursor"
+  | "opencode"
+  | "crush"
+  | "all";
 
 export interface UsageSummary {
   provider: UsageProviderId;
@@ -30,6 +36,10 @@ export interface ModelUsage {
       output: number;
     };
     total: number;
+  };
+  metric?: {
+    unit: "tokens" | "messages";
+    value: number;
   };
 }
 
