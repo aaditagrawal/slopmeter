@@ -1,4 +1,4 @@
-export type UsageProviderId = "claude" | "codex" | "opencode" | "all";
+export type UsageProviderId = "claude" | "codex" | "opencode" | "pi" | "all";
 
 export interface UsageSummary {
   provider: UsageProviderId;

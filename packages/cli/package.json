@@ -1,7 +1,7 @@
 {
   "name": "slopmeter",
   "version": "0.4.0",
-  "description": "CLI for generating yearly usage heatmaps for Claude Code, Codex, and Open Code.",
+  "description": "CLI for generating yearly usage heatmaps for Claude Code, Codex, Open Code, and Pi Coding Agent.",
   "type": "module",
   "engines": {
     "node": ">=22"
@@ -22,7 +22,8 @@
     "usage",
     "codex",
     "claude-code",
-    "opencode"
+    "opencode",
+    "pi-coding-agent"
   ],
   "bin": {
     "slopmeter": "./dist/cli.js"

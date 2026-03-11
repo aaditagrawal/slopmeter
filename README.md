@@ -1,6 +1,6 @@
 # slopmeter
 
-CLI tool that generates usage heatmaps for Claude Code, Codex, and Open Code for the rolling past year (ending today).
+CLI tool that generates usage heatmaps for Claude Code, Codex, Open Code, and Pi Coding Agent for the rolling past year (ending today).
 
 ## Monorepo layout
 
@@ -59,6 +59,7 @@ slopmeter --all
 slopmeter --claude
 slopmeter --codex
 slopmeter --opencode
+slopmeter --pi
 ```
 
 ## What the image shows
@@ -97,6 +98,7 @@ Model names are normalized to remove a trailing date suffix like `-20251101`.
 
 - If no provider flags are passed, the CLI renders all providers with available data.
 - If `--all` is passed, the CLI renders one merged graph across all providers with consolidated totals, streaks, and model rankings.
+- Pi Coding Agent usage is derived from assistant messages in Pi session logs, grouped by the model that handled each turn.
 - If provider flags are passed, `slopmeter` only loads those providers and only prints availability for those providers.
 - If no provider flags are passed, the CLI loads all providers and prints availability for all providers.
 - If explicit provider flags are passed and any requested provider has no data, the command exits with an error.
@@ -117,9 +119,11 @@ Model names are normalized to remove a trailing date suffix like `-20251101`.
 - Codex now streams JSONL records and only parses records that affect usage aggregation.
 - Oversized irrelevant Codex records are skipped and summarized with a warning after processing.
 - Oversized relevant Codex records fail the affected file with a clear error that names the file, line number, byte cap, and `SLOPMETER_MAX_JSONL_RECORD_BYTES`.
+- Pi Coding Agent session logs are streamed and only assistant messages are parsed for usage aggregation.
 
 ## Data locations
 
 - Claude Code: `$CLAUDE_CONFIG_DIR/*/projects` (comma-separated dirs) or defaults `~/.config/claude/projects` and `~/.claude/projects`
 - Codex: `$CODEX_HOME/sessions` or `~/.codex/sessions`
 - Open Code: prefers `$OPENCODE_DATA_DIR/opencode.db` or `~/.local/share/opencode/opencode.db`, and falls back to `$OPENCODE_DATA_DIR/storage/message` or `~/.local/share/opencode/storage/message`
+- Pi Coding Agent: `$PI_CODING_AGENT_DIR/sessions` or `~/.pi/agent/sessions`

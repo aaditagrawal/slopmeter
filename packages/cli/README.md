@@ -1,6 +1,6 @@
 # slopmeter
 
-`slopmeter` is a Node.js CLI that scans local Claude Code, Codex, and Open Code usage data and generates a contribution-style heatmap for the rolling past year.
+`slopmeter` is a Node.js CLI that scans local Claude Code, Codex, Open Code, and Pi Coding Agent usage data and generates a contribution-style heatmap for the rolling past year.
 
 ## Requirements
 
@@ -24,7 +24,7 @@ slopmeter
 ## Usage
 
 ```bash
-slopmeter [--all] [--claude] [--codex] [--opencode] [--dark] [--format png|svg|json] [--output ./heatmap-last-year.png]
+slopmeter [--all] [--claude] [--codex] [--opencode] [--pi] [--dark] [--format png|svg|json] [--output ./heatmap-last-year.png]
 ```
 
 By default, the CLI:
@@ -38,6 +38,7 @@ By default, the CLI:
 - `--claude`: include only Claude Code data
 - `--codex`: include only Codex data
 - `--opencode`: include only Open Code data
+- `--pi`: include only Pi Coding Agent data
 - `--all`: merge all providers into one combined graph
 - `--dark`: render the image with the dark theme
 - `-f, --format <png|svg|json>`: choose the output format
@@ -70,6 +71,12 @@ Render only Codex usage:
 npx slopmeter --codex
 ```
 
+Render only Pi Coding Agent usage:
+
+```bash
+npx slopmeter --pi
+```
+
 Render one merged graph across all providers:
 
 ```bash
@@ -97,6 +104,7 @@ npx slopmeter --dark --format svg --output ./out/heatmap-dark.svg
 - Earliest Claude Code activity fallback: uses `$CLAUDE_CONFIG_DIR/history.jsonl`, `~/.config/claude/history.jsonl`, or `~/.claude/history.jsonl` to mark activity-only days when token totals are unavailable
 - Codex: `$CODEX_HOME/sessions` or `~/.codex/sessions`
 - Open Code: prefers `$OPENCODE_DATA_DIR/opencode.db` or `~/.local/share/opencode/opencode.db`, and falls back to `$OPENCODE_DATA_DIR/storage/message` or `~/.local/share/opencode/storage/message`
+- Pi Coding Agent: `$PI_CODING_AGENT_DIR/sessions` or `~/.pi/agent/sessions`
 
 When Claude Code falls back to `stats-cache.json`, the daily input/output/cache split is reconstructed from Claude's cached model totals because the older layout does not keep per-request usage logs.
 When Claude Code falls back to `history.jsonl`, those days are rendered as activity-only cells and do not affect the token totals shown in the header.
@@ -105,6 +113,7 @@ When Claude Code falls back to `history.jsonl`, those days are rendered as activ
 
 - If no provider flags are passed, `slopmeter` renders every provider with available data.
 - If `--all` is passed, `slopmeter` loads all providers and renders one combined graph with merged totals, streaks, and model rankings.
+- Pi Coding Agent usage is derived from assistant messages in Pi session logs, grouped by the model that handled each turn.
 - If provider flags are passed and a requested provider has no data, the command exits with an error.
 - If no provider has data, the command exits with an error.
 
@@ -124,6 +133,7 @@ When Claude Code falls back to `history.jsonl`, those days are rendered as activ
 - Only Codex `turn_context` and `event_msg` `token_count` records are parsed for usage aggregation.
 - Oversized irrelevant Codex records are skipped and reported in a warning summary.
 - Oversized relevant Codex records fail the file with a clear error that names the file, line number, byte cap, and `SLOPMETER_MAX_JSONL_RECORD_BYTES`.
+- Pi Coding Agent session logs are streamed and only assistant messages are parsed for usage aggregation.
 
 ## License
 

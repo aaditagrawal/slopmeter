@@ -7,6 +7,7 @@ import {
   type ProviderId,
 } from "./lib/interfaces";
 import { loadOpenCodeRows } from "./lib/open-code";
+import { loadPiRows } from "./lib/pi";
 import { hasUsage, mergeUsageSummaries } from "./lib/utils";
 
 export { providerIds, providerStatusLabel, type ProviderId };
@@ -42,12 +43,14 @@ export async function aggregateUsage({
   end,
   requestedProviders,
 }: AggregateUsageOptions): Promise<AggregateUsageResult> {
-  const providersToLoad =
-    requestedProviders?.length ? requestedProviders : providerIds;
+  const providersToLoad = requestedProviders?.length
+    ? requestedProviders
+    : providerIds;
   const rowsByProvider: Record<ProviderId, UsageSummary | null> = {
     claude: null,
     codex: null,
     opencode: null,
+    pi: null,
   };
   const warnings: string[] = [];
 
@@ -57,7 +60,9 @@ export async function aggregateUsage({
         ? await loadClaudeRows(start, end)
         : provider === "codex"
           ? await loadCodexRows(start, end, warnings)
-          : await loadOpenCodeRows(start, end);
+          : provider === "opencode"
+            ? await loadOpenCodeRows(start, end)
+            : await loadPiRows(start, end);
 
     rowsByProvider[provider] = hasUsage(summary) ? summary : null;
   }
