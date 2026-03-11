@@ -24,7 +24,7 @@ slopmeter
 ## Usage
 
 ```bash
-slopmeter [--claude] [--codex] [--opencode] [--format png|svg|json] [--output ./heatmap-last-year.png]
+slopmeter [--claude] [--codex] [--opencode] [--dark] [--format png|svg|json] [--output ./heatmap-last-year.png]
 ```
 
 By default, the CLI:
@@ -38,6 +38,7 @@ By default, the CLI:
 - `--claude`: include only Claude Code data
 - `--codex`: include only Codex data
 - `--opencode`: include only Open Code data
+- `--dark`: render the image with the dark theme
 - `-f, --format <png|svg|json>`: choose the output format
 - `-o, --output <path>`: write output to a custom path
 - `-h, --help`: print the help text
@@ -47,25 +48,31 @@ By default, the CLI:
 Generate the default PNG:
 
 ```bash
-npx slop-meter
+npx slopmeter
 ```
 
 Write an SVG:
 
 ```bash
-npx slop-meter --format svg --output ./out/heatmap.svg
+npx slopmeter --format svg --output ./out/heatmap.svg
 ```
 
 Write JSON for custom rendering:
 
 ```bash
-npx slop-meter --format json --output ./out/heatmap.json
+npx slopmeter --format json --output ./out/heatmap.json
 ```
 
 Render only Codex usage:
 
 ```bash
-npx slop-meter --codex
+npx slopmeter --codex
+```
+
+Render a dark-theme SVG:
+
+```bash
+npx slopmeter --dark --format svg --output ./out/heatmap-dark.svg
 ```
 
 ## Output behavior

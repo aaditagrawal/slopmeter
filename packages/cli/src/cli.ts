@@ -4,7 +4,7 @@ import { parseArgs } from "node:util";
 import ora, { type Ora } from "ora";
 import ow from "ow";
 import sharp from "sharp";
-import { heatmapThemes, renderUsageHeatmapsSvg } from "./graph";
+import { heatmapThemes, renderUsageHeatmapsSvg, type ColorMode } from "./graph";
 import type {
   JsonExportPayload,
   JsonUsageSummary,
@@ -19,6 +19,7 @@ interface CliArgValues {
   output?: string;
   format?: string;
   help: boolean;
+  dark: boolean;
   claude: boolean;
   codex: boolean;
   opencode: boolean;
@@ -34,12 +35,13 @@ const HELP_TEXT = `slopmeter
 Generate rolling 1-year usage heatmap image(s) (today is the latest day).
 
 Usage:
-  slopmeter [--claude] [--codex] [--opencode] [--format png|svg|json] [--output ./heatmap-last-year.png]
+  slopmeter [--claude] [--codex] [--opencode] [--dark] [--format png|svg|json] [--output ./heatmap-last-year.png]
 
 Options:
   --claude                    Render Claude Code graph
   --codex                     Render Codex graph
   --opencode                  Render Open Code graph
+  --dark                      Render with the dark theme
   -f, --format                Output format: png, svg, or json (default: png)
   -o, --output                Output file path (default: ./heatmap-last-year.png)
   -h, --help                  Show this help
@@ -56,6 +58,7 @@ function validateArgs(values: unknown): asserts values is CliArgValues {
       output: ow.optional.string.nonEmpty,
       format: ow.optional.string.nonEmpty,
       help: ow.boolean,
+      dark: ow.boolean,
       claude: ow.boolean,
       codex: ow.boolean,
       opencode: ow.boolean,
@@ -181,6 +184,7 @@ function selectProvidersToRender(
 function printRunSummary(
   outputPath: string,
   format: OutputFormat,
+  colorMode: ColorMode,
   startDate: Date,
   endDate: Date,
   rendered: ProviderId[],
@@ -190,6 +194,7 @@ function printRunSummary(
       {
         output: outputPath,
         format,
+        colorMode,
         startDate: formatLocalDate(startDate),
         endDate: formatLocalDate(endDate),
         rendered,
@@ -208,6 +213,7 @@ async function main() {
       output: { type: "string", short: "o" },
       format: { type: "string", short: "f" },
       help: { type: "boolean", short: "h", default: false },
+      dark: { type: "boolean", default: false },
       claude: { type: "boolean", default: false },
       codex: { type: "boolean", default: false },
       opencode: { type: "boolean", default: false },
@@ -232,7 +238,7 @@ async function main() {
     }).start();
 
     const { start, end } = getDateWindow();
-
+    const colorMode: ColorMode = values.dark ? "dark" : "light";
     const format = inferFormat(values.format, values.output);
     const rowsByProvider = await aggregateUsage({ start, end });
 
@@ -270,6 +276,7 @@ async function main() {
       const svg = renderUsageHeatmapsSvg({
         startDate: start,
         endDate: end,
+        colorMode,
         sections: exportProviders.map(({ provider, daily, insights }) => ({
           daily,
           insights,
@@ -287,6 +294,7 @@ async function main() {
     printRunSummary(
       outputPath,
       format,
+      colorMode,
       start,
       end,
       exportProviders.map(({ provider }) => provider),

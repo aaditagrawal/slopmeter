@@ -5,8 +5,13 @@ import { formatLocalDate } from "./lib/utils";
 
 interface HeatmapTheme {
   title: string;
-  colors: string[];
+  colors: {
+    light: string[];
+    dark: string[];
+  };
 }
+
+export type ColorMode = "light" | "dark";
 
 interface CalendarGrid {
   weeks: (string | null)[][];
@@ -37,14 +42,16 @@ interface DrawHeatmapSectionOptions {
   daily: DailyUsage[];
   insights?: Insights;
   title: string;
-  colors: string[];
+  colors: HeatmapTheme["colors"];
+  colorMode: ColorMode;
+  palette: SurfacePalette;
 }
 
 interface RenderUsageHeatmapsSvgSection {
   daily: DailyUsage[];
   insights?: Insights;
   title: string;
-  colors: string[];
+  colors: HeatmapTheme["colors"];
 }
 
 interface ModelUsageRow {
@@ -56,38 +63,72 @@ interface RenderUsageHeatmapsSvgOptions {
   startDate: Date;
   endDate: Date;
   sections: RenderUsageHeatmapsSvgSection[];
+  colorMode: ColorMode;
+}
+
+interface SurfacePalette {
+  background: string;
+  text: string;
+  muted: string;
 }
 
 export const heatmapThemes: Record<ProviderId, HeatmapTheme> = {
   claude: {
     title: "Claude Code",
-    colors: [
-      "#fff7ed", // orange-50
-      "#fed7aa", // orange-200
-      "#fdba74", // orange-300
-      "#f97316", // orange-500
-      "#c2410c", // orange-700
-    ],
+    colors: {
+      light: [
+        "#fff7ed", // orange-50
+        "#fed7aa", // orange-200
+        "#fdba74", // orange-300
+        "#f97316", // orange-500
+        "#c2410c", // orange-700
+      ],
+      dark: [
+        "#292524", // stone-800
+        "#9a3412", // orange-800
+        "#c2410c", // orange-700
+        "#f97316", // orange-500
+        "#fdba74", // orange-300
+      ],
+    },
   },
   codex: {
     title: "Codex",
-    colors: [
-      "#e0e7ff", // indigo-100
-      "#a5b4fc", // indigo-300
-      "#818cf8", // indigo-400
-      "#4f46e5", // indigo-600
-      "#312e81", // indigo-900
-    ],
+    colors: {
+      light: [
+        "#e0e7ff", // indigo-100
+        "#a5b4fc", // indigo-300
+        "#818cf8", // indigo-400
+        "#4f46e5", // indigo-600
+        "#312e81", // indigo-900
+      ],
+      dark: [
+        "#1e1b4b", // indigo-950
+        "#312e81", // indigo-900
+        "#4338ca", // indigo-700
+        "#818cf8", // indigo-400
+        "#c7d2fe", // indigo-200
+      ],
+    },
   },
   opencode: {
     title: "Open Code",
-    colors: [
-      "#f5f5f5", // neutral-100
-      "#d4d4d4", // neutral-300
-      "#a3a3a3", // neutral-400
-      "#525252", // neutral-600
-      "#171717", // neutral-900
-    ],
+    colors: {
+      light: [
+        "#f5f5f5", // neutral-100
+        "#d4d4d4", // neutral-300
+        "#a3a3a3", // neutral-400
+        "#525252", // neutral-600
+        "#171717", // neutral-900
+      ],
+      dark: [
+        "#262626", // neutral-800
+        "#525252", // neutral-600
+        "#737373", // neutral-500
+        "#a3a3a3", // neutral-400
+        "#fafafa", // neutral-50
+      ],
+    },
   },
 };
 
@@ -95,11 +136,23 @@ const daysOfWeekMonday = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const numberFormatter = new Intl.NumberFormat("en-US");
 const fontFamily =
   "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
-const mutedColor = "#737373";
 const providerTitleFontSize = 20;
 const metricCaptionFontSize = 9;
 const metricValueFontSize = 14;
 const captionValueGap = 4;
+
+const surfacePalettes: Record<ColorMode, SurfacePalette> = {
+  light: {
+    background: "#ffffff",
+    text: "#0f172a",
+    muted: "#737373",
+  },
+  dark: {
+    background: "#171717",
+    text: "#fafafa",
+    muted: "#a3a3a3",
+  },
+};
 
 function formatTokenTotal(value: number) {
   const units = [
@@ -270,8 +323,11 @@ function drawHeatmapSection(
     insights,
     title,
     colors,
+    colorMode,
+    palette,
   }: DrawHeatmapSectionOptions,
 ) {
+  const colorsForMode = colors[colorMode];
   const valueByDate = new Map<string, number>();
   const rightEdge = x + layout.width - 8;
   const leftColumnX = x + 8;
@@ -289,6 +345,7 @@ function drawHeatmapSection(
   }
 
   const topMetricGap = 120;
+  const headerLast30DaysX = rightEdge - topMetricGap * 3;
   const headerInputX = rightEdge - topMetricGap * 2;
   const headerOutputX = rightEdge - topMetricGap;
   const totalTokensLabel = formatTokenTotal(totalTokens);
@@ -301,7 +358,7 @@ function drawHeatmapSection(
     {
       x: leftColumnX,
       y: y + layout.titleY,
-      fill: "#0f172a",
+      fill: palette.text,
       "font-size": providerTitleFontSize,
       "font-weight": 600,
       "dominant-baseline": "hanging",
@@ -314,7 +371,7 @@ function drawHeatmapSection(
     {
       x: headerInputX,
       y: y + layout.headerCaptionY,
-      fill: mutedColor,
+      fill: palette.muted,
       "font-size": metricCaptionFontSize,
       "font-weight": 600,
       "text-anchor": "end",
@@ -328,7 +385,7 @@ function drawHeatmapSection(
     {
       x: headerInputX,
       y: y + layout.headerValueY,
-      fill: "#0f172a",
+      fill: palette.text,
       "font-size": metricValueFontSize,
       "font-weight": 600,
       "text-anchor": "end",
@@ -342,7 +399,7 @@ function drawHeatmapSection(
     {
       x: headerOutputX,
       y: y + layout.headerCaptionY,
-      fill: mutedColor,
+      fill: palette.muted,
       "font-size": metricCaptionFontSize,
       "font-weight": 600,
       "text-anchor": "end",
@@ -356,7 +413,7 @@ function drawHeatmapSection(
     {
       x: headerOutputX,
       y: y + layout.headerValueY,
-      fill: "#0f172a",
+      fill: palette.text,
       "font-size": metricValueFontSize,
       "font-weight": 600,
       "text-anchor": "end",
@@ -370,7 +427,7 @@ function drawHeatmapSection(
     {
       x: rightEdge,
       y: y + layout.headerCaptionY,
-      fill: mutedColor,
+      fill: palette.muted,
       "font-size": metricCaptionFontSize,
       "font-weight": 600,
       "text-anchor": "end",
@@ -384,7 +441,7 @@ function drawHeatmapSection(
     {
       x: rightEdge,
       y: y + layout.headerValueY,
-      fill: "#0f172a",
+      fill: palette.text,
       "font-size": metricValueFontSize,
       "font-weight": 600,
       "text-anchor": "end",
@@ -407,7 +464,7 @@ function drawHeatmapSection(
       {
         x: x + layout.leftLabelWidth - 6,
         y: dayY,
-        fill: mutedColor,
+        fill: palette.muted,
         "font-size": 10,
         "text-anchor": "end",
         "dominant-baseline": "middle",
@@ -428,7 +485,7 @@ function drawHeatmapSection(
         {
           x: monthX,
           y: y + layout.monthLabelY,
-          fill: mutedColor,
+          fill: palette.muted,
           "font-size": 10,
           "font-family": fontFamily,
         },
@@ -446,8 +503,12 @@ function drawHeatmapSection(
       }
 
       const value = valueByDate.get(day) ?? 0;
-      const colorIndex = defaultColourMap(value, maxValue, colors.length);
-      const fill = colors[colorIndex];
+      const colorIndex = defaultColourMap(
+        value,
+        maxValue,
+        colorsForMode.length,
+      );
+      const fill = colorsForMode[colorIndex];
 
       const dayX =
         x + layout.leftLabelWidth + weekIndex * (layout.cellSize + layout.gap);
@@ -473,7 +534,7 @@ function drawHeatmapSection(
     {
       x: legendStartX,
       y: legendY + 10,
-      fill: mutedColor,
+      fill: palette.muted,
       "font-size": 10,
       "font-weight": 600,
       "font-family": fontFamily,
@@ -481,7 +542,7 @@ function drawHeatmapSection(
     caption("Less"),
   );
 
-  for (let i = 0; i < colors.length; i += 1) {
+  for (let i = 0; i < colorsForMode.length; i += 1) {
     const legendX = legendStartX + 28 + i * (layout.cellSize + 3);
 
     svg = svg.rect({
@@ -491,15 +552,15 @@ function drawHeatmapSection(
       height: layout.cellSize,
       rx: 3,
       ry: 3,
-      fill: colors[i],
+      fill: colorsForMode[i],
     });
   }
 
   svg = svg.text(
     {
-      x: legendStartX + 28 + colors.length * (layout.cellSize + 3) + 6,
+      x: legendStartX + 28 + colorsForMode.length * (layout.cellSize + 3) + 6,
       y: legendY + 10,
-      fill: mutedColor,
+      fill: palette.muted,
       "font-size": 10,
       "font-weight": 600,
       "font-family": fontFamily,
@@ -535,7 +596,7 @@ function drawHeatmapSection(
       {
         x: modelX,
         y: y + captionY,
-        fill: mutedColor,
+        fill: palette.muted,
         "font-size": metricCaptionFontSize,
         "font-weight": 600,
         "dominant-baseline": "hanging",
@@ -551,7 +612,7 @@ function drawHeatmapSection(
         "dominant-baseline": "hanging",
         "font-family": fontFamily,
       },
-      `<tspan fill="#0f172a" font-size="${metricValueFontSize}" font-weight="600">${escapeXml(modelName)}</tspan><tspan dx="6" fill="${mutedColor}" font-size="${metricValueFontSize}" font-weight="400">${tokenLabel}</tspan>`,
+      `<tspan fill="${palette.text}" font-size="${metricValueFontSize}" font-weight="600">${escapeXml(modelName)}</tspan><tspan dx="6" fill="${palette.muted}" font-size="${metricValueFontSize}" font-weight="400">${tokenLabel}</tspan>`,
     );
   }
 
@@ -559,7 +620,7 @@ function drawHeatmapSection(
     {
       x: rightPrimaryX,
       y: y + layout.footerCaptionY,
-      fill: mutedColor,
+      fill: palette.muted,
       "font-size": metricCaptionFontSize,
       "font-weight": 600,
       "text-anchor": "end",
@@ -573,7 +634,7 @@ function drawHeatmapSection(
     {
       x: rightPrimaryX,
       y: y + layout.footerValueY,
-      fill: "#0f172a",
+      fill: palette.text,
       "font-size": metricValueFontSize,
       "font-weight": 600,
       "text-anchor": "end",
@@ -587,7 +648,7 @@ function drawHeatmapSection(
     {
       x: rightColumnX,
       y: y + layout.footerCaptionY,
-      fill: mutedColor,
+      fill: palette.muted,
       "font-size": metricCaptionFontSize,
       "font-weight": 600,
       "text-anchor": "end",
@@ -601,7 +662,7 @@ function drawHeatmapSection(
     {
       x: rightColumnX,
       y: y + layout.footerValueY,
-      fill: "#0f172a",
+      fill: palette.text,
       "font-size": metricValueFontSize,
       "font-weight": 600,
       "text-anchor": "end",
@@ -618,9 +679,11 @@ export function renderUsageHeatmapsSvg({
   startDate,
   endDate,
   sections,
+  colorMode,
 }: RenderUsageHeatmapsSvgOptions) {
   const grid = getCalendarGrid(startDate, endDate);
   const layout = getSectionLayout(grid.weeks.length);
+  const palette = surfacePalettes[colorMode];
   const horizontalPadding = 18;
   const topPadding = 30;
   const bottomPadding = 18;
@@ -638,7 +701,7 @@ export function renderUsageHeatmapsSvg({
     .width(width)
     .height(height)
     .viewBox(`0 0 ${width} ${height}`)
-    .rect({ x: 0, y: 0, width, height, fill: "#ffffff" });
+    .rect({ x: 0, y: 0, width, height, fill: palette.background });
 
   sections.forEach((section, index) => {
     const sectionY = topPadding + index * (layout.height + sectionGap);
@@ -652,6 +715,8 @@ export function renderUsageHeatmapsSvg({
       insights: section.insights,
       title: section.title,
       colors: section.colors,
+      colorMode,
+      palette,
     });
   });
 

@@ -48,6 +48,10 @@ slopmeter --format svg
 slopmeter --format json
 slopmeter -f svg
 
+# Dark theme
+slopmeter --dark
+slopmeter --dark --format svg
+
 # Provider filters (optional)
 slopmeter --claude
 slopmeter --codex
@@ -58,6 +62,7 @@ slopmeter --opencode
 
 - Monday-first contribution-style heatmap for the last year.
 - Top metrics per provider:
+  - `LAST 30 DAYS`
   - `INPUT TOKENS`
   - `OUTPUT TOKENS`
   - `TOTAL TOKENS` (includes cache tokens)
