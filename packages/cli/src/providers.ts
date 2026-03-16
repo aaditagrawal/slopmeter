@@ -1,4 +1,5 @@
 import type { UsageSummary } from "./interfaces";
+import { isAmpAvailable, loadAmpRows } from "./lib/amp";
 import { isClaudeAvailable, loadClaudeRows } from "./lib/claude-code";
 import { isCodexAvailable, loadCodexRows } from "./lib/codex";
 import { isCursorAvailable, loadCursorRows } from "./lib/cursor";
@@ -30,6 +31,7 @@ export type ProviderAvailability = Record<ProviderId, boolean>;
 
 function createEmptyProviderAvailability(): ProviderAvailability {
   return {
+    amp: false,
     claude: false,
     codex: false,
     cursor: false,
@@ -41,6 +43,8 @@ function createEmptyProviderAvailability(): ProviderAvailability {
 
 export async function isProviderAvailable(provider: ProviderId): Promise<boolean> {
   switch (provider) {
+    case "amp":
+      return isAmpAvailable();
     case "claude":
       return isClaudeAvailable();
     case "codex":
@@ -97,6 +101,7 @@ export async function aggregateUsage({
     ? requestedProviders
     : providerIds;
   const rowsByProvider: Record<ProviderId, UsageSummary | null> = {
+    amp: null,
     claude: null,
     codex: null,
     cursor: null,
@@ -110,6 +115,9 @@ export async function aggregateUsage({
     let summary: UsageSummary;
 
     switch (provider) {
+      case "amp":
+        summary = await loadAmpRows(start, end);
+        break;
       case "claude":
         summary = await loadClaudeRows(start, end);
         break;
