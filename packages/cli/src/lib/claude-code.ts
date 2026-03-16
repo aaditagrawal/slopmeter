@@ -260,6 +260,14 @@ function getClaudeHistoryFiles() {
   return files;
 }
 
+export function isClaudeAvailable() {
+  return (
+    getClaudeProjectDirs().length > 0 ||
+    getClaudeStatsCacheFiles().length > 0 ||
+    getClaudeHistoryFiles().length > 0
+  );
+}
+
 async function loadClaudeStatsCacheRows(
   startDate: Date,
   endDate: Date,

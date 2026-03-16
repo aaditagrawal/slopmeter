@@ -1,17 +1,18 @@
 import type { UsageSummary } from "./interfaces";
-import { loadClaudeRows } from "./lib/claude-code";
-import { loadCodexRows } from "./lib/codex";
-import { loadCursorRows } from "./lib/cursor";
+import { isClaudeAvailable, loadClaudeRows } from "./lib/claude-code";
+import { isCodexAvailable, loadCodexRows } from "./lib/codex";
+import { isCursorAvailable, loadCursorRows } from "./lib/cursor";
 import {
+  defaultProviderIds,
   providerIds,
   providerStatusLabel,
   type ProviderId,
 } from "./lib/interfaces";
-import { loadOpenCodeRows } from "./lib/open-code";
-import { loadPiRows } from "./lib/pi";
+import { isOpenCodeAvailable, loadOpenCodeRows } from "./lib/open-code";
+import { isPiAvailable, loadPiRows } from "./lib/pi";
 import { hasUsage, mergeUsageSummaries } from "./lib/utils";
 
-export { providerIds, providerStatusLabel, type ProviderId };
+export { defaultProviderIds, providerIds, providerStatusLabel, type ProviderId };
 
 interface AggregateUsageOptions {
   start: Date;
@@ -22,6 +23,50 @@ interface AggregateUsageOptions {
 export interface AggregateUsageResult {
   rowsByProvider: Record<ProviderId, UsageSummary | null>;
   warnings: string[];
+}
+
+export type ProviderAvailability = Record<ProviderId, boolean>;
+
+function createEmptyProviderAvailability(): ProviderAvailability {
+  return {
+    claude: false,
+    codex: false,
+    cursor: false,
+    opencode: false,
+    pi: false,
+  };
+}
+
+export async function isProviderAvailable(provider: ProviderId): Promise<boolean> {
+  switch (provider) {
+    case "claude":
+      return isClaudeAvailable();
+    case "codex":
+      return isCodexAvailable();
+    case "cursor":
+      return isCursorAvailable();
+    case "opencode":
+      return isOpenCodeAvailable();
+    case "pi":
+      return isPiAvailable();
+    default: {
+      const exhaustiveCheck: never = provider;
+
+      throw new Error(`Unhandled provider: ${String(exhaustiveCheck)}`);
+    }
+  }
+}
+
+export async function getProviderAvailability(
+  providers: ProviderId[] = providerIds,
+): Promise<ProviderAvailability> {
+  const availability = createEmptyProviderAvailability();
+
+  for (const provider of providers) {
+    availability[provider] = await isProviderAvailable(provider);
+  }
+
+  return availability;
 }
 
 export function mergeProviderUsage(
@@ -57,16 +102,30 @@ export async function aggregateUsage({
   const warnings: string[] = [];
 
   for (const provider of providersToLoad) {
-    const summary =
-      provider === "claude"
-        ? await loadClaudeRows(start, end)
-        : provider === "codex"
-          ? await loadCodexRows(start, end, warnings)
-          : provider === "cursor"
-            ? await loadCursorRows(start, end)
-            : provider === "opencode"
-              ? await loadOpenCodeRows(start, end)
-              : await loadPiRows(start, end);
+    let summary: UsageSummary;
+
+    switch (provider) {
+      case "claude":
+        summary = await loadClaudeRows(start, end);
+        break;
+      case "codex":
+        summary = await loadCodexRows(start, end, warnings);
+        break;
+      case "cursor":
+        summary = await loadCursorRows(start, end);
+        break;
+      case "opencode":
+        summary = await loadOpenCodeRows(start, end);
+        break;
+      case "pi":
+        summary = await loadPiRows(start, end);
+        break;
+      default: {
+        const exhaustiveCheck: never = provider;
+
+        throw new Error(`Unhandled provider: ${String(exhaustiveCheck)}`);
+      }
+    }
 
     rowsByProvider[provider] = hasUsage(summary) ? summary : null;
   }

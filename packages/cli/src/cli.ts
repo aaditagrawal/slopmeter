@@ -15,6 +15,8 @@ import type { ProviderId } from "./providers";
 import { formatLocalDate } from "./lib/utils";
 import {
   aggregateUsage,
+  defaultProviderIds,
+  getProviderAvailability,
   mergeProviderUsage,
   providerIds,
   providerStatusLabel,
@@ -161,13 +163,13 @@ function getDateWindow() {
 }
 
 function printProviderAvailability(
-  rowsByProvider: Record<ProviderId, UsageSummary | null>,
+  availabilityByProvider: Record<ProviderId, boolean>,
   providers: ProviderId[],
 ) {
   for (const provider of providers) {
-    const found = rowsByProvider[provider] ? "found" : "not found";
+    const status = availabilityByProvider[provider] ? "available" : "not available";
 
-    process.stdout.write(`${providerStatusLabel[provider]} ${found}\n`);
+    process.stdout.write(`${providerStatusLabel[provider]} ${status}\n`);
   }
 }
 
@@ -177,11 +179,13 @@ function getRequestedProviders(values: CliArgValues) {
 
 function getOutputProviders(
   values: CliArgValues,
+  availabilityByProvider: Record<ProviderId, boolean>,
   rowsByProvider: Record<ProviderId, UsageSummary | null>,
   end: Date,
 ) {
   if (!values.all) {
     return selectProvidersToRender(
+      availabilityByProvider,
       rowsByProvider,
       getRequestedProviders(values),
     );
@@ -190,12 +194,33 @@ function getOutputProviders(
   const merged = mergeProviderUsage(rowsByProvider, end);
 
   if (!merged) {
-    throw new Error(
-      "No usage data found for Claude Code, Codex, Cursor, Open Code, or Pi Coding Agent.",
-    );
+    throw new Error("No usage data found for any provider.");
   }
 
   return [merged];
+}
+
+function getDefaultOutputProviderIds(
+  rowsByProvider: Record<ProviderId, UsageSummary | null>,
+) {
+  const selected: ProviderId[] = [];
+  const fallbackProviders = providerIds.filter(
+    (provider) => !defaultProviderIds.includes(provider),
+  );
+
+  for (const provider of [...defaultProviderIds, ...fallbackProviders]) {
+    if (!rowsByProvider[provider] || selected.includes(provider)) {
+      continue;
+    }
+
+    selected.push(provider);
+
+    if (selected.length === 3) {
+      return selected;
+    }
+  }
+
+  return selected;
 }
 
 function getMergedProviderTitle(
@@ -208,13 +233,15 @@ function getMergedProviderTitle(
 }
 
 function selectProvidersToRender(
+  availabilityByProvider: Record<ProviderId, boolean>,
   rowsByProvider: Record<ProviderId, UsageSummary | null>,
   requested: ProviderId[],
 ) {
+  const defaultProviders = getDefaultOutputProviderIds(rowsByProvider);
   const providersToRender =
     requested.length > 0
       ? requested.filter((provider) => rowsByProvider[provider])
-      : providerIds.filter((provider) => rowsByProvider[provider]);
+      : defaultProviders.filter((provider) => rowsByProvider[provider]);
 
   if (requested.length > 0 && providersToRender.length < requested.length) {
     const missing = requested.filter((provider) => !rowsByProvider[provider]);
@@ -225,8 +252,25 @@ function selectProvidersToRender(
   }
 
   if (providersToRender.length === 0) {
+    const availableProviders = providerIds.filter(
+      (provider) => availabilityByProvider[provider],
+    );
+
+    if (availableProviders.length > 0) {
+      const availableLabels = availableProviders
+        .map((provider) => providerStatusLabel[provider])
+        .join(", ");
+      const defaultLabels = defaultProviderIds
+        .map((provider) => providerStatusLabel[provider])
+        .join(", ");
+
+      throw new Error(
+        `No usage data found for available providers (${availableLabels}). Preferred order is ${defaultLabels}. Use --all or specify providers explicitly.`,
+      );
+    }
+
     throw new Error(
-      "No usage data found for Claude Code, Codex, Cursor, Open Code, or Pi Coding Agent.",
+      "No usage data found for any provider.",
     );
   }
 
@@ -300,6 +344,8 @@ async function main() {
       : getRequestedProviders(values);
     const inspectedProviders =
       requestedProviders.length > 0 ? requestedProviders : providerIds;
+    const availabilityByProvider =
+      await getProviderAvailability(inspectedProviders);
     const { rowsByProvider, warnings } = await aggregateUsage({
       start,
       end,
@@ -312,9 +358,14 @@ async function main() {
       process.stderr.write(`${warning}\n`);
     }
 
-    printProviderAvailability(rowsByProvider, inspectedProviders);
+    printProviderAvailability(availabilityByProvider, inspectedProviders);
 
-    const exportProviders = getOutputProviders(values, rowsByProvider, end);
+    const exportProviders = getOutputProviders(
+      values,
+      availabilityByProvider,
+      rowsByProvider,
+      end,
+    );
 
     const outputPath = resolve(
       values.output ?? `./heatmap-last-year.${format}`,

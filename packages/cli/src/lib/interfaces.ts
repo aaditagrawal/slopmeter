@@ -8,6 +8,8 @@ export const providerIds: ProviderId[] = [
   "pi",
 ];
 
+export const defaultProviderIds: ProviderId[] = ["claude", "codex", "cursor"];
+
 export const providerStatusLabel: Record<ProviderId, string> = {
   claude: "Claude code",
   codex: "Codex",
