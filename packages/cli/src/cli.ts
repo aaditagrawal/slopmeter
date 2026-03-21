@@ -38,6 +38,7 @@ interface CliArgValues {
   opencode: boolean;
   pi: boolean;
   crush: boolean;
+  antigravity: boolean;
 }
 
 const PNG_BASE_WIDTH = 1000;
@@ -50,7 +51,7 @@ const HELP_TEXT = `slopmeter
 Generate rolling 1-year usage heatmap image(s) (today is the latest day).
 
 Usage:
-  slopmeter [--all] [--amp] [--claude] [--codex] [--cursor] [--gemini] [--opencode] [--pi] [--crush] [--dark] [--format png|svg|json] [--output ./heatmap-last-year.png]
+  slopmeter [--all] [--amp] [--claude] [--codex] [--cursor] [--gemini] [--opencode] [--pi] [--crush] [--antigravity] [--dark] [--format png|svg|json] [--output ./heatmap-last-year.png]
 
 Options:
   --all                       Render one merged graph for all providers
@@ -62,6 +63,7 @@ Options:
   --opencode                  Render Open Code graph
   --pi                        Render Pi Coding Agent graph
   --crush                     Render Crush graph
+  --antigravity               Render Google Antigravity graph
   --dark                      Render with the dark theme
   -f, --format                Output format: png, svg, or json (default: png)
   -o, --output                Output file path (default: ./heatmap-last-year.png)
@@ -89,6 +91,7 @@ function validateArgs(values: unknown): asserts values is CliArgValues {
       opencode: ow.boolean,
       pi: ow.boolean,
       crush: ow.boolean,
+      antigravity: ow.boolean,
     }),
   );
 }
@@ -337,6 +340,7 @@ async function main() {
       opencode: { type: "boolean", default: false },
       pi: { type: "boolean", default: false },
       crush: { type: "boolean", default: false },
+      antigravity: { type: "boolean", default: false },
     },
     allowPositionals: false,
   });

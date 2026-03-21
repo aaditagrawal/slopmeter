@@ -15,6 +15,7 @@ function createValues(overrides?: Partial<{
   gemini: boolean;
   opencode: boolean;
   pi: boolean;
+  antigravity: boolean;
 }>) {
   return {
     all: false,
@@ -26,6 +27,7 @@ function createValues(overrides?: Partial<{
     gemini: false,
     opencode: false,
     pi: false,
+    antigravity: false,
     ...overrides,
   };
 }

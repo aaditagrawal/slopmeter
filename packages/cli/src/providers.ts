@@ -11,6 +11,7 @@ import {
   providerStatusLabel,
   type ProviderId,
 } from "./lib/interfaces";
+import { isAntigravityAvailable, loadAntigravityRows } from "./lib/antigravity";
 import { isOpenCodeAvailable, loadOpenCodeRows } from "./lib/open-code";
 import { isPiAvailable, loadPiRows } from "./lib/pi";
 import { hasUsage, mergeUsageSummaries } from "./lib/utils";
@@ -40,6 +41,7 @@ function createEmptyProviderAvailability(): ProviderAvailability {
     gemini: false,
     opencode: false,
     pi: false,
+    antigravity: false,
   };
 }
 
@@ -61,6 +63,8 @@ export async function isProviderAvailable(provider: ProviderId): Promise<boolean
       return isOpenCodeAvailable();
     case "pi":
       return isPiAvailable();
+    case "antigravity":
+      return isAntigravityAvailable();
     default: {
       const exhaustiveCheck: never = provider;
 
@@ -113,6 +117,7 @@ export async function aggregateUsage({
     opencode: null,
     pi: null,
     crush: null,
+    antigravity: null,
   };
   const warnings: string[] = [];
 
@@ -143,6 +148,9 @@ export async function aggregateUsage({
         break;
       case "pi":
         summary = await loadPiRows(start, end);
+        break;
+      case "antigravity":
+        summary = await loadAntigravityRows(start, end);
         break;
       default: {
         const exhaustiveCheck: never = provider;

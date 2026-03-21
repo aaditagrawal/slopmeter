@@ -7,6 +7,7 @@ export type UsageProviderId =
   | "opencode"
   | "pi"
   | "crush"
+  | "antigravity"
   | "all";
 
 export interface UsageSummary {

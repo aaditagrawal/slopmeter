@@ -1,6 +1,6 @@
 # slopmeter
 
-CLI tool that generates usage heatmaps for Claude Code, Codex, Crush, Cursor, Gemini CLI, Open Code, and Pi Coding Agent for the rolling past year (ending today).
+CLI tool that generates usage heatmaps for Amp, Claude Code, Codex, Crush, Cursor, Gemini CLI, Google Antigravity, Open Code, and Pi Coding Agent for the rolling past year (ending today).
 
 ## Monorepo layout
 
@@ -63,6 +63,7 @@ slopmeter --gemini
 slopmeter --opencode
 slopmeter --crush
 slopmeter --pi
+slopmeter --antigravity
 ```
 
 ## What the image shows
@@ -103,6 +104,8 @@ Model names are normalized to remove a trailing date suffix like `-20251101`.
 - If no provider flags are passed, the CLI renders all providers with available data.
 - If `--all` is passed, the CLI renders one merged graph across all providers with consolidated totals, streaks, and model rankings.
 - Pi Coding Agent usage is derived from assistant messages in Pi session logs, grouped by the model that handled each turn.
+- Google Antigravity usage is aggregated from local Antigravity request logs, synced `trajectorySummaries` state, browser recording metadata, annotation view timestamps, and Antigravity-managed conversation/implicit file mtimes.
+- Google Antigravity currently reports activity, streaks, and best-effort model counts. It does not expose real input/output token totals from local state, so activity-only graphs show `N/A` for token counters.
 - If provider flags are passed, `slopmeter` only loads those providers and only prints availability for those providers.
 - If no provider flags are passed, the CLI loads all providers and prints availability for all providers.
 - If explicit provider flags are passed and any requested provider has no data, the command exits with an error.
@@ -112,6 +115,9 @@ Model names are normalized to remove a trailing date suffix like `-20251101`.
 
 - `SLOPMETER_FILE_PROCESS_CONCURRENCY`: positive integer file-processing limit for Claude Code and Codex JSONL files. Default: `16`.
 - `SLOPMETER_MAX_JSONL_RECORD_BYTES`: byte cap for Claude Code and Codex JSONL records, OpenCode JSON documents, and OpenCode SQLite `message.data` payloads. Default: `67108864` (`64 MB`).
+- `ANTIGRAVITY_LOGS_DIR`: overrides the Antigravity extension logs directory.
+- `ANTIGRAVITY_STATE_DB`: overrides the Antigravity `state.vscdb` path used for synced trajectory summaries.
+- `ANTIGRAVITY_DATA_DIR`: overrides the Antigravity local data dir used for browser recordings, annotations, conversations, and implicit state. Default: `~/.gemini/antigravity`.
 
 ## JSONL oversized-record behavior
 
@@ -134,3 +140,6 @@ Model names are normalized to remove a trailing date suffix like `-20251101`.
 - Open Code: prefers `$OPENCODE_DATA_DIR/opencode.db` or `~/.local/share/opencode/opencode.db`, and falls back to `$OPENCODE_DATA_DIR/storage/message` or `~/.local/share/opencode/storage/message`
 - Crush: reads `crush.db` from the current workspace `./.crush`, `~/.crush`, tracked Crush project data dirs listed in global `projects.json`, the global data dir itself, and project-local `.crush/crush.db` files discovered under `HOME` when Crush has not tracked them yet. The global metadata dir is discovered from `$CRUSH_GLOBAL_DATA`, `$XDG_DATA_HOME/crush`, `%LOCALAPPDATA%\\crush`, or `~/.local/share/crush`
 - Pi Coding Agent: `$PI_CODING_AGENT_DIR/sessions` or `~/.pi/agent/sessions`
+- Google Antigravity logs: `$ANTIGRAVITY_LOGS_DIR` or `~/Library/Application Support/Antigravity/logs` (macOS), `%APPDATA%\\Antigravity\\logs` (Windows), or `$XDG_CONFIG_HOME/Antigravity/logs` / `~/.config/Antigravity/logs` (Linux)
+- Google Antigravity synced state: `$ANTIGRAVITY_STATE_DB` or `~/Library/Application Support/Antigravity/User/globalStorage/state.vscdb` (macOS), `%APPDATA%\\Antigravity\\User\\globalStorage\\state.vscdb` (Windows), or `$XDG_CONFIG_HOME/Antigravity/User/globalStorage/state.vscdb` / `~/.config/Antigravity/User/globalStorage/state.vscdb` (Linux)
+- Google Antigravity local data: `$ANTIGRAVITY_DATA_DIR` or `~/.gemini/antigravity`
