@@ -80,6 +80,25 @@ interface SurfacePalette {
 }
 
 export const heatmapThemes: Record<HeatmapThemeId, HeatmapTheme> = {
+  amp: {
+    title: "Amp",
+    colors: {
+      light: [
+        "#ecfeff", // cyan-50
+        "#a5f3fc", // cyan-200
+        "#67e8f9", // cyan-300
+        "#06b6d4", // cyan-500
+        "#0e7490", // cyan-700
+      ],
+      dark: [
+        "#083344", // cyan-950
+        "#155e75", // cyan-800
+        "#0891b2", // cyan-600
+        "#22d3ee", // cyan-400
+        "#a5f3fc", // cyan-200
+      ],
+    },
+  },
   claude: {
     title: "Claude Code",
     colors: {
@@ -134,6 +153,25 @@ export const heatmapThemes: Record<HeatmapThemeId, HeatmapTheme> = {
         "#c2410c", // orange-700
         "#f97316", // orange-500
         "#fdba74", // orange-300
+      ],
+    },
+  },
+  gemini: {
+    title: "Gemini CLI",
+    colors: {
+      light: [
+        "#eff6ff", // blue-50
+        "#bfdbfe", // blue-200
+        "#93c5fd", // blue-300
+        "#3b82f6", // blue-500
+        "#1d4ed8", // blue-700
+      ],
+      dark: [
+        "#172554", // blue-950
+        "#1d4ed8", // blue-700
+        "#2563eb", // blue-600
+        "#60a5fa", // blue-400
+        "#bfdbfe", // blue-200
       ],
     },
   },
@@ -195,7 +233,8 @@ export const heatmapThemes: Record<HeatmapThemeId, HeatmapTheme> = {
     },
   },
   all: {
-    title: "Codex / Claude Code / Cursor / Open Code / Pi Coding Agent / Crush",
+    title:
+      "Amp / Claude Code / Codex / Crush / Cursor / Gemini CLI / Open Code / Pi Coding Agent",
     titleCaption: "Total usage from",
     colors: {
       light: [

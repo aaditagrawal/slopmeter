@@ -1,7 +1,9 @@
 export type UsageProviderId =
+  | "amp"
   | "claude"
   | "codex"
   | "cursor"
+  | "gemini"
   | "opencode"
   | "pi"
   | "crush"
