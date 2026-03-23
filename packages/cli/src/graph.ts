@@ -252,8 +252,7 @@ export const heatmapThemes: Record<HeatmapThemeId, HeatmapTheme> = {
     },
   },
   all: {
-    title:
-      "Amp / Claude Code / Codex / Crush / Cursor / Gemini CLI / Google Antigravity / Open Code / Pi Coding Agent",
+    title: "All Providers",
     titleCaption: "Total usage from",
     colors: {
       light: [

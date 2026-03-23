@@ -71,3 +71,12 @@ test("default output suffix follows provider flag order", () => {
     "_amp_gemini_opencode_pi",
   );
 });
+
+test("default output suffix includes antigravity", () => {
+  assert.equal(
+    getDefaultOutputSuffix(
+      createValues({ antigravity: true, claude: true }),
+    ),
+    "_claude_antigravity",
+  );
+});

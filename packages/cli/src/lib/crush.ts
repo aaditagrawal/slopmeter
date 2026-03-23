@@ -410,11 +410,10 @@ async function loadCrushUsageRows(databasePath: string, recentWindowStart: numbe
   }
 }
 
-export function isCrushAvailable() {
-  const cwdCrush = resolve(".crush", "crush.db");
-  const homeCrush = join(homedir(), ".crush", "crush.db");
+export async function isCrushAvailable() {
+  const paths = await getCrushDatabasePaths();
 
-  return existsSync(cwdCrush) || existsSync(homeCrush);
+  return paths.length > 0;
 }
 
 export async function loadCrushRows(

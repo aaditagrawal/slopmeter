@@ -406,13 +406,17 @@ async function loadStateValues(
   try {
     return await readStateValues(databasePath, keys);
   } catch (error) {
-    if (!isSqliteLockedError(error)) {
-      throw error;
+    if (isSqliteLockedError(error)) {
+      return withDatabaseSnapshot(databasePath, (snapshotPath) =>
+        readStateValues(snapshotPath, keys),
+      );
     }
 
-    return withDatabaseSnapshot(databasePath, (snapshotPath) =>
-      readStateValues(snapshotPath, keys),
-    );
+    const message = error instanceof Error ? error.message : String(error);
+
+    console.warn(`Warning: could not read Antigravity state DB ${databasePath}: ${message}`);
+
+    return new Map();
   }
 }
 

@@ -56,6 +56,8 @@ slopmeter --dark --format svg
 slopmeter --all
 
 # Provider filters (optional)
+slopmeter --amp
+slopmeter --antigravity
 slopmeter --claude
 slopmeter --codex
 slopmeter --cursor
@@ -63,7 +65,6 @@ slopmeter --gemini
 slopmeter --opencode
 slopmeter --crush
 slopmeter --pi
-slopmeter --antigravity
 ```
 
 ## What the image shows

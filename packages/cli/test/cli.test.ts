@@ -663,7 +663,7 @@ async function runCli(
   extraEnv: Record<string, string>,
   options?: { cwd?: string },
 ) {
-  const isolatedHome = extraEnv.HOME ?? options?.cwd ?? tmpdir();
+  const isolatedHome = extraEnv.HOME ?? options?.cwd ?? mkdtempSync(join(tmpdir(), "slopmeter-test-"));
 
   return await new Promise<{
     code: number | null;
@@ -674,6 +674,10 @@ async function runCli(
       env: {
         ...process.env,
         HOME: isolatedHome,
+        APPDATA: isolatedHome,
+        LOCALAPPDATA: isolatedHome,
+        XDG_CONFIG_HOME: join(isolatedHome, ".config"),
+        XDG_DATA_HOME: join(isolatedHome, ".local", "share"),
         ...extraEnv,
         FORCE_COLOR: "0",
         NODE_NO_WARNINGS: "1",

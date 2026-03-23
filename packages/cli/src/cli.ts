@@ -191,7 +191,10 @@ function getRequestedProviders(values: CliArgValues) {
 }
 
 function getMergedNoDataMessage() {
-  return "No usage data found for Amp, Claude Code, Codex, Crush, Cursor, Gemini CLI, Open Code, or Pi Coding Agent.";
+  const labels = providerIds.map((id) => providerStatusLabel[id]);
+  const last = labels.pop();
+
+  return `No usage data found for ${labels.join(", ")}, or ${last}.`;
 }
 
 function getRequestedMissingProvidersMessage(missing: ProviderId[]) {

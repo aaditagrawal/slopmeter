@@ -246,9 +246,13 @@ export async function isCursorAvailable() {
     return false;
   }
 
-  const authState = await readCursorAuthState(databasePath);
+  try {
+    const authState = await readCursorAuthState(databasePath);
 
-  return Boolean(authState.accessToken);
+    return Boolean(authState.accessToken);
+  } catch {
+    return false;
+  }
 }
 
 function decodeJwtPayload(token: string) {
