@@ -66,7 +66,7 @@ Options:
   --antigravity               Render Google Antigravity graph
   --dark                      Render with the dark theme
   -f, --format                Output format: png, svg, or json (default: png)
-  -o, --output                Output file path (default: ./heatmap-last-year.png)
+  -o, --output                Output file path (default: ./heatmap-last-year[_<providers>].png)
   -h, --help                  Show this help
 `;
 
@@ -286,12 +286,9 @@ function selectProvidersToRender(
       const availableLabels = availableProviders
         .map((provider) => providerStatusLabel[provider])
         .join(", ");
-      const defaultLabels = defaultProviderIds
-        .map((provider) => providerStatusLabel[provider])
-        .join(", ");
 
       throw new Error(
-        `No usage data found for available providers (${availableLabels}). Preferred order is ${defaultLabels}. Use --all or specify providers explicitly.`,
+        `No usage data found for available providers (${availableLabels}).`,
       );
     }
 

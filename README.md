@@ -115,7 +115,7 @@ Model names are normalized to remove a trailing date suffix like `-20251101`.
 ## Environment knobs
 
 - `SLOPMETER_FILE_PROCESS_CONCURRENCY`: positive integer file-processing limit for Claude Code and Codex JSONL files. Default: `16`.
-- `SLOPMETER_MAX_JSONL_RECORD_BYTES`: byte cap for Claude Code and Codex JSONL records, OpenCode JSON documents, and OpenCode SQLite `message.data` payloads. Default: `67108864` (`64 MB`).
+- `SLOPMETER_MAX_JSONL_RECORD_BYTES`: byte cap for Claude Code and Codex JSONL records, Gemini CLI session files, OpenCode JSON documents, and OpenCode SQLite `message.data` payloads. Default: `67108864` (`64 MB`).
 - `ANTIGRAVITY_LOGS_DIR`: overrides the Antigravity extension logs directory.
 - `ANTIGRAVITY_STATE_DB`: overrides the Antigravity `state.vscdb` path used for synced trajectory summaries.
 - `ANTIGRAVITY_DATA_DIR`: overrides the Antigravity local data dir used for browser recordings, annotations, conversations, and implicit state. Default: `~/.gemini/antigravity`.
@@ -137,6 +137,7 @@ Model names are normalized to remove a trailing date suffix like `-20251101`.
 - Claude Code: `$CLAUDE_CONFIG_DIR/*/projects` (comma-separated dirs) or defaults `~/.config/claude/projects` and `~/.claude/projects`
 - Codex: `$CODEX_HOME/sessions` or `~/.codex/sessions`
 - Cursor: reads `cursorAuth/accessToken` and `cursorAuth/refreshToken` from `$CURSOR_STATE_DB_PATH`, `$CURSOR_CONFIG_DIR/User/globalStorage/state.vscdb`, `~/Library/Application Support/Cursor/User/globalStorage/state.vscdb` (macOS), `%APPDATA%/Cursor/User/globalStorage/state.vscdb` (Windows), or `~/.config/Cursor/User/globalStorage/state.vscdb` (Linux), then loads usage from Cursor's CSV export endpoint
+- Amp: `$AMP_DATA_DIR` or `$XDG_DATA_HOME/amp` or `~/.local/share/amp`
 - Gemini CLI: `$GEMINI_CONFIG_DIR/tmp/**/chats/session-*.json` or `~/.gemini/tmp/**/chats/session-*.json`
 - Open Code: prefers `$OPENCODE_DATA_DIR/opencode.db` or `~/.local/share/opencode/opencode.db`, and falls back to `$OPENCODE_DATA_DIR/storage/message` or `~/.local/share/opencode/storage/message`
 - Crush: reads `crush.db` from the current workspace `./.crush`, `~/.crush`, tracked Crush project data dirs listed in global `projects.json`, the global data dir itself, and project-local `.crush/crush.db` files discovered under `HOME` when Crush has not tracked them yet. The global metadata dir is discovered from `$CRUSH_GLOBAL_DATA`, `$XDG_DATA_HOME/crush`, `%LOCALAPPDATA%\\crush`, or `~/.local/share/crush`
