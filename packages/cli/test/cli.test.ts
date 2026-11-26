@@ -740,7 +740,7 @@ test("--codex only loads Codex and only reports Codex availability", async (t) =
   );
 
   assert.equal(result.code, 0, result.stderr || result.stdout);
-  assert.match(result.stdout, /Codex found/);
+  assert.match(result.stdout, /^Codex available$/m);
   assert.doesNotMatch(result.stdout, /Claude code/);
   assert.doesNotMatch(result.stdout, /Open Code/);
 
@@ -1013,7 +1013,7 @@ test("--pi only loads Pi Coding Agent and ignores oversized irrelevant session r
   );
 
   assert.equal(result.code, 0, result.stderr || result.stdout);
-  assert.match(result.stdout, /Pi Coding Agent found/);
+  assert.match(result.stdout, /^Pi Coding Agent available$/m);
   assert.doesNotMatch(result.stdout, /Claude code/);
   assert.doesNotMatch(result.stdout, /Codex/);
   assert.doesNotMatch(result.stdout, /Open Code/);
@@ -1079,7 +1079,7 @@ test("--gemini only loads Gemini CLI and only reports Gemini availability", asyn
   );
 
   assert.equal(result.code, 0, result.stderr || result.stdout);
-  assert.match(result.stdout, /Gemini CLI found/);
+  assert.match(result.stdout, /^Gemini CLI available$/m);
   assert.doesNotMatch(result.stdout, /Claude code/);
   assert.doesNotMatch(result.stdout, /Codex/);
   assert.doesNotMatch(result.stdout, /Open Code/);
@@ -1361,8 +1361,8 @@ test("Gemini CLI participates in multi-provider output order", async (t) => {
   );
 
   assert.equal(result.code, 0, result.stderr || result.stdout);
-  assert.match(result.stdout, /Gemini CLI found/);
-  assert.match(result.stdout, /Pi Coding Agent found/);
+  assert.match(result.stdout, /^Gemini CLI available$/m);
+  assert.match(result.stdout, /^Pi Coding Agent available$/m);
 
   const payload = JSON.parse(readFileSync(outputPath, "utf8")) as {
     providers: Array<{ provider: string }>;
@@ -1824,7 +1824,7 @@ test("OpenCode reads the legacy file-backed message layout", async (t) => {
   );
 
   assert.equal(result.code, 0, result.stderr || result.stdout);
-  assert.match(result.stdout, /Open Code found/);
+  assert.match(result.stdout, /^Open Code available$/m);
 
   const payload = JSON.parse(readFileSync(outputPath, "utf8")) as {
     providers: Array<{ provider: string; daily: Array<{ total: number }> }>;
@@ -1872,7 +1872,7 @@ test("OpenCode prefers the SQLite message store when opencode.db exists", async 
   );
 
   assert.equal(result.code, 0, result.stderr || result.stdout);
-  assert.match(result.stdout, /Open Code found/);
+  assert.match(result.stdout, /^Open Code available$/m);
 
   const payload = JSON.parse(readFileSync(outputPath, "utf8")) as {
     providers: Array<{ provider: string; daily: Array<{ total: number }> }>;
@@ -2056,7 +2056,7 @@ test("--crush only loads Crush from tracked project data dirs", async (t) => {
   );
 
   assert.equal(result.code, 0, result.stderr || result.stdout);
-  assert.match(result.stdout, /Crush found/);
+  assert.match(result.stdout, /^Crush available$/m);
   assert.doesNotMatch(result.stdout, /Claude code/);
   assert.doesNotMatch(result.stdout, /Codex/);
   assert.doesNotMatch(result.stdout, /Open Code/);
@@ -2432,7 +2432,7 @@ test("Google Antigravity loads request activity from extension logs", async (t) 
   );
 
   assert.equal(result.code, 0, result.stderr || result.stdout);
-  assert.match(result.stdout, /Google Antigravity found/);
+  assert.match(result.stdout, /^Google Antigravity available$/m);
   assert.doesNotMatch(result.stdout, /Codex/);
 
   const payload = JSON.parse(readFileSync(outputPath, "utf8")) as {
